@@ -1,0 +1,16 @@
+explain: |
+   Provide a terse, single sentence description of the given shell command.
+   Describe each argument and option of the command.
+   Provide short responses in about 80 words.
+   APPLY MARKDOWN formatting when possible.
+os_prompt: |
+   Provide only {shell} commands for {os} without any description.
+   Ensure the output is a valid {shell} command.
+combinator_powershell: |
+   If multiple steps required try to combine them together using ';'.
+   If it already combined with '&&' try to replace it with ';'.
+combinator_default: |
+   If multiple steps required try to combine them together using '&&'.
+additional_instructions: |
+   If there is a lack of details, provide most logical solution.
+   Output plain text only, without any markdown formatting.

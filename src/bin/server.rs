@@ -1,133 +1,143 @@
-use actix_web::{web, App, HttpServer, Responder};
-use clap::{Arg, Command as ClapCommand};
-use shellchat_lib::{InputData, OutputData};
+use std::fs;
+use std::sync::Arc;
+use actix_web::{App, HttpServer, Responder, web};
+use clap::Parser;
+use serde::Deserialize;
+use fancy_regex::Regex;
+use shellchat_lib::common::{HEADER_API_KEY, ShellRequest, ShellResponse};
+use shellchat_lib::prompts::Prompts;
+use shellchat_lib::providers::{new_provider, ProviderApi, ProviderConfig};
+use shellchat_lib::defaults::DEFAULT_API_KEY;
 
-#[derive(Debug)]
-enum AiProviderType {
-    OpenAI { api_key: String, base_url: String },
-    AzureOpenAI { api_key: String, base_url: String },
-    Ollama { api_key: String, base_url: String },
+lazy_static::lazy_static! {
+    pub static ref CODE_BLOCK_RE: Regex = Regex::new(r"(?ms)```\w*(.*)```").unwrap();
 }
 
-#[derive(Debug)]
-struct AiProvider {
-    provider_type: AiProviderType,
+#[derive(Debug, Deserialize, Clone)]
+struct Config {
+    provider: ProviderConfig,
 }
 
-#[derive(Debug)]
-struct Cli {
-    address: String,
-    port: u16,
-    model_name: String,
-    ai_provider: AiProvider,
-}
-
-impl Cli {
-    fn new() -> Self {
-        let matches = ClapCommand::new("My Server")
-            .arg(Arg::new("address")
-                     .long("address")
-                     .value_name("ADDRESS")
-                     .help("Sets the server address")
-                     .env("SERVER_ADDRESS") // Use environment variable
-                     .default_value("127.0.0.1") // Fallback default value
-            )
-            .arg(Arg::new("port")
-                     .long("port")
-                     .value_name("PORT")
-                     .help("Sets the server port")
-                     .env("SERVER_PORT") // Use environment variable
-                     .default_value("8080") // Fallback default value
-            )
-            .arg(Arg::new("model")
-                     .long("model")
-                     .value_name("MODEL")
-                     .help("Sets the model name")
-                     .env("MODEL_NAME") // Use environment variable
-                     .default_value("default_model") // Fallback default value
-            )
-            .arg(Arg::new("provider")
-                     .long("provider")
-                     .value_name("PROVIDER")
-                     .help("Sets the AI provider type")
-                     .env("AI_PROVIDER_TYPE") // Use environment variable
-                     .default_value("openai") // Fallback default value
-            )
-            .arg(Arg::new("api_key")
-                     .long("api_key")
-                     .value_name("API_KEY")
-                     .help("Sets the API key for the AI provider")
-                     .env("AI_PROVIDER_API_KEY") // Use environment variable
-                     .default_value("default_key") // Fallback default value
-            )
-            .arg(Arg::new("base_url")
-                     .long("base_url")
-                     .value_name("BASE_URL")
-                     .help("Sets the base URL for the AI provider")
-                     .env("AI_PROVIDER_BASE_URL") // Use environment variable
-                     .default_value("https://api.example.com") // Fallback default value
-            )
-            .get_matches();
-
-        let address = matches.get_one::<String>("address").unwrap().clone();
-        let port = matches.get_one::<String>("port").unwrap().parse().unwrap_or(8080);
-        let model_name = matches.get_one::<String>("model").unwrap().clone();
-        let provider_type = matches.get_one::<String>("provider").unwrap().clone();
-        let api_key = matches.get_one::<String>("api_key").unwrap().clone();
-        let base_url = matches.get_one::<String>("base_url").unwrap().clone();
-
-        let ai_provider = match provider_type.as_str() {
-            "openai" => AiProvider {
-                provider_type: AiProviderType::OpenAI { api_key, base_url },
-            },
-            "azure" => AiProvider {
-                provider_type: AiProviderType::AzureOpenAI { api_key, base_url },
-            },
-            "ollama" => AiProvider {
-                provider_type: AiProviderType::Ollama { api_key, base_url },
-            },
-            _ => panic!("Unsupported AI provider type"),
-        };
-
-        Self {
-            address,
-            port,
-            model_name,
-            ai_provider,
-        }
+impl Config {
+    fn from_yaml(file_path: &str) -> Self {
+        let config_content = fs::read_to_string(file_path).expect("Failed to read the configuration file");
+        serde_yaml::from_str(&config_content).expect("Failed to parse the configuration file")
     }
 }
 
-async fn execute(data: web::Json<InputData>) -> impl Responder {
-    let input_str = &data.data;
-    let output_data = OutputData {
-        result: format!("Endpoint 1: Received {}", input_str),
-    };
-    web::Json(output_data)
+struct AppConfig {
+    provider: Arc<dyn ProviderApi + Send + Sync>,
+    prompts: Prompts,
 }
 
-async fn explain(data: web::Json<InputData>) -> impl Responder {
-    let input_str = &data.data;
-    let output_data = OutputData {
-        result: format!("Endpoint 2: Received {}", input_str),
+async fn chat(
+    request: web::Json<ShellRequest>,
+    data: web::Data<Arc<AppConfig>>,
+    key: web::Data<Arc<String>>,
+    req: actix_web::HttpRequest,
+) -> impl Responder {
+    let api_key = req
+        .headers()
+        .get(HEADER_API_KEY)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if api_key != key.as_str() {
+        return actix_web::HttpResponse::Unauthorized().body("Invalid API key");
+    }
+
+    let prompts = &data.prompts;
+    let provider = &data.provider;
+
+    let prompt = if !request.explain {
+        &prompts.shell_prompt(&request.os, &request.shell)
+    } else {
+        &prompts.explain
     };
-    web::Json(output_data)
+
+    let response = match provider.call(&prompt, &request.prompt).await {
+        Ok(mut eval_str) => {
+            if !request.explain {
+                if let Ok(true) = CODE_BLOCK_RE.is_match(&eval_str) {
+                    eval_str = extract_block(&eval_str);
+                }
+            }
+
+            ShellResponse {
+                result: eval_str,
+                error: String::new(),
+            }
+        },
+        Err(error) => ShellResponse {
+            result: String::new(),
+            error,
+        },
+    };
+
+    actix_web::HttpResponse::Ok().json(response)
+}
+
+pub fn extract_block(input: &str) -> String {
+    let output: String = CODE_BLOCK_RE
+        .captures_iter(input)
+        .filter_map(|m| {
+            m.ok()
+                .and_then(|cap| cap.get(1))
+                .map(|m| String::from(m.as_str()))
+        })
+        .collect();
+    if output.is_empty() {
+        input.trim().to_string()
+    } else {
+        output.trim().to_string()
+    }
+}
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct Cli {
+    #[clap(short = 'c', long, env = "CONFIG", default_value = "config.yaml")]
+    pub config: String,
+    #[clap(short = 'a', long, env = "ADDRESS", default_value = "127.0.0.1")]
+    pub address: String,
+    #[clap(short = 'p', long, env = "PORT", default_value = "8080")]
+    pub port: String,
+    #[clap(short = 'k', long, env = "KEY")]
+    pub key: Option<String>,
+}
+
+impl Cli {
+    pub fn config(&self) -> Config {
+        Config::from_yaml(&self.config)
+    }
+
+    pub fn endpoint(&self) -> String {
+        format!("{}:{}", &self.address, &self.port)
+    }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let cli = Cli::new();
+    let cli = Cli::parse();
 
-    println!("Server started at {}:{}", cli.address, cli.port);
-    println!("Using model: {}", cli.model_name);
-    println!("AI Provider: {:?}", cli.ai_provider);
+    let config = cli.config();
+    let key = Arc::new(cli.key.clone().unwrap_or_else(||  DEFAULT_API_KEY.to_string()));
+
+    let app_config = Arc::new(AppConfig {
+        provider: new_provider(&config.provider),
+        prompts: Prompts::from_yaml_content(include_str!("../../prompts.yaml")),
+    });
+
+    let endpoint = &cli.endpoint();
+    println!("server started at {}", &endpoint);
 
     HttpServer::new(move || {
         App::new()
-            .route("/execute", web::post().to(execute))
-            .route("/explain", web::post().to(explain))
+            .app_data(web::Data::new(app_config.clone()))
+            .app_data(web::Data::new(key.clone()))
+            .route("/", web::post().to(chat))
     })
-        .bind(format!("{}:{}", cli.address, cli.port))?
+        .bind(endpoint)?
         .run()
         .await
 }
