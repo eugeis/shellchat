@@ -6,7 +6,12 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct ClientCli {
-    #[clap(short = 'u', long, env = "API_URL", default_value = "http://127.0.0.1:8080")]
+    #[clap(
+        short = 'u',
+        long,
+        env = "API_URL",
+        default_value = "http://127.0.0.1:8080"
+    )]
     pub url: String,
     #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,
