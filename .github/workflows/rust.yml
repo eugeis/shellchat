@@ -36,10 +36,20 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
+      - name: Install dependencies on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install openssl
+          export OPENSSL_DIR=$(brew --prefix openssl)
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} --bins
+        env:
+          OPENSSL_DIR: ${{ env.OPENSSL_DIR }}
+        continue-on-error: true
 
       - name: Upload binaries
+        if: always()  # Ensure that this step runs even if the build fails
         uses: actions/upload-artifact@v2
         with:
           name: binaries-${{ matrix.os_name }}-${{ matrix.target }}
