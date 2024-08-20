@@ -1,3 +1,4 @@
+use std::panic::panic_any;
 use std::sync::Arc;
 use async_trait::async_trait;
 use reqwest::Client;
@@ -12,7 +13,9 @@ pub trait ProviderApi {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum ProviderConfig {
-    AzureOpenAI { api_key: String, base_url: String, model: String }
+    OpenAI { api_key: String, base_url: String, model: String },
+    AzureOpenAI { api_key: String, base_url: String, model: String },
+    Ollama { api_key: String, base_url: String, model: String },
 }
 
 #[derive(Clone)]
@@ -82,6 +85,9 @@ pub fn new_provider(provider_type: &ProviderConfig) -> Arc<dyn ProviderApi + Sen
                 &model,
             )
         }),
+        _ => {
+            panic_any(format!("the provider not implemented yet: {:?}", provider_type))
+        }
     };
     provider
 }

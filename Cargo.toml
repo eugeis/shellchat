@@ -1,14 +1,15 @@
 [package]
 name = "shellchat"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Eugen Eisler <eoeisler@gmail.com>"]
-description = "Executes shell commands based on provided prompts"
+description = "Transforms natural language into shell commands for execution or explanation."
 license = "MIT"
 homepage = "https://github.com/eugeis/shellchat"
 repository = "https://github.com/eugeis/shellchat"
 categories = ["command-line-utilities"]
 keywords = ["chatgpt", "llm", "cli", "gpt", "repl"]
+readme = "README.md"
 
 [dependencies]
 actix-web = "4" # or the latest version you prefer
@@ -32,13 +33,16 @@ tokio-graceful = "0.1.6"
 tokio-stream = { version = "0.1.15", default-features = false, features = ["sync"] }
 crossterm = "0.28.1"
 is-terminal = "0.4.9"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tracing-appender = "0.2"
 
 [lib]
-name = "shellchat_lib"
+name = "sc_lib"
 path = "src/lib/mod.rs"
 
 [[bin]]
-name = "sc-server"
+name = "sc-serve"
 path = "src/bin/server.rs"
 
 [[bin]]

@@ -4,7 +4,6 @@ use log::debug;
 use reqwest::Client;
 use crate::command;
 use crate::command::SHELL;
-use crate::common;
 use crate::common::ShellRequest;
 use crate::common::ShellResponse;
 use crate::common::HEADER_API_KEY;
