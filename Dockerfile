@@ -4,13 +4,13 @@ WORKDIR /app
 COPY . .
 
 # Build the server
-RUN cargo build --release --bin sc-server
+RUN cargo build --release --bin sc-serve
 
 # Production stage
 FROM debian:buster-slim
 
 WORKDIR /usr/local/bin
 
-COPY --from=builder /app/target/release/sc-server .
+COPY --from=builder /app/target/release/sc-serve .
 
-CMD ["./sc-server"]
+CMD ["./sc-serve"]
