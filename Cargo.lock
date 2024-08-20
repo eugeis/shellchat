@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "shellchat"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "actix-web",
  "anyhow",

@@ -21,10 +21,10 @@ pub struct Config {
 
 impl Config {
     fn from_yaml(file_path: &str) -> Self {
-        let config_content = fs::read_to_string(file_path).expect(
-            &format!("Failed to read the configuration file: {}", file_path));
-        serde_yaml::from_str(&config_content).expect(
-            &format!("Failed to read the configuration file: {}", file_path))
+        let config_content = fs::read_to_string(file_path)
+            .unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path));
+        serde_yaml::from_str(&config_content).
+            unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path))
     }
 }
 
@@ -59,7 +59,7 @@ pub async fn chat(
         &prompts.explain
     };
 
-    let response = match provider.call(&prompt, &request.prompt).await {
+    let response = match provider.call(prompt, &request.prompt).await {
         Ok(mut eval_str) => {
             if !request.explain {
                 if let Ok(true) = CODE_BLOCK_RE.is_match(&eval_str) {

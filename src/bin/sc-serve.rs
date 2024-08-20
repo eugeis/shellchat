@@ -14,7 +14,7 @@ async fn main() -> std::io::Result<()> {
     match &cli.logs_dir {
         Some(dir) => {
             //we need to keep the guard alive
-            let _guard = setup_tracing_file_console(&dir, "sc-serve");
+            let _guard = setup_tracing_file_console(dir, "sc-serve");
         }
         None => {
             setup_tracing_console();

@@ -40,7 +40,7 @@ impl Chatter {
     }
 
     async fn chat(&self, prompt: &str, explain: bool) -> ShellResponse {
-        let res = self.client
+        self.client
             .post(&self.endpoint)
             .header(HEADER_API_KEY, &self.api_key)
             .json(&self.build_request(prompt, explain))
@@ -49,8 +49,7 @@ impl Chatter {
             .unwrap()
             .json()
             .await
-            .unwrap();
-        return res
+            .unwrap()
     }
 
     #[async_recursion::async_recursion]

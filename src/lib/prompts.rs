@@ -17,7 +17,7 @@ impl Prompts {
     }
 
     pub fn from_yaml_content(config_content: &str) -> Self {
-        serde_yaml::from_str(&config_content).expect("Failed to parse the prompts file")
+        serde_yaml::from_str(config_content).expect("Failed to parse the prompts file")
     }
 
     pub fn shell_prompt(&self, os: &str, shell: &str) -> String {
