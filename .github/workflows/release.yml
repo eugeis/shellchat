@@ -74,6 +74,13 @@ jobs:
             echo "rc=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install System Dependencies
+        if: startsWith(matrix.target, 'x86_64') || startsWith(matrix.target, 'i686') || startsWith(matrix.target, 'armv7') || startsWith(matrix.target, 'arm')
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y pkg-config libssl-dev
+          fi
 
       - name: Install Rust Toolchain Components
         uses: dtolnay/rust-toolchain@stable
