@@ -21,8 +21,10 @@ pub struct Config {
 
 impl Config {
     fn from_yaml(file_path: &str) -> Self {
-        let config_content = fs::read_to_string(file_path).expect("Failed to read the configuration file");
-        serde_yaml::from_str(&config_content).expect("Failed to parse the configuration file")
+        let config_content = fs::read_to_string(file_path).expect(
+            &format!("Failed to read the configuration file: {}", file_path));
+        serde_yaml::from_str(&config_content).expect(
+            &format!("Failed to read the configuration file: {}", file_path))
     }
 }
 

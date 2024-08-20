@@ -1,5 +1,5 @@
 use std::process;
-use inquire::{Select, Text};
+use inquire::{Select};
 use log::debug;
 use reqwest::Client;
 use crate::command;
@@ -55,7 +55,7 @@ impl Chatter {
 
     #[async_recursion::async_recursion]
     pub async fn shell_execute(&self, text: &str) -> anyhow::Result<()> {
-        let spinner = create_spinner("Generating").await;
+        let spinner = create_spinner("Translating").await;
         let response = self.chat(text, false).await;
         let eval_str = response.result;
         spinner.stop();
@@ -63,7 +63,7 @@ impl Chatter {
         loop {
             let answer = Select::new(
                 eval_str.trim(),
-                vec!["✅ Execute", "🔄️ Revise", "📖 Explain", "❌ Cancel"],
+                vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
             )
                 .prompt()?;
 
@@ -74,11 +74,6 @@ impl Chatter {
                     if code != 0 {
                         process::exit(code);
                     }
-                }
-                "🔄️ Revise" => {
-                    let revision = Text::new("Enter your revision:").prompt()?;
-                    let text = format!("{}\n{revision}", eval_str);
-                    return self.shell_execute(&text).await;
                 }
                 "📖 Explain" => {
                     let answer = self.chat(&eval_str, true).await;
