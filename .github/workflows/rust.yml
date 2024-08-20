@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         os_name: [linux, windows, macos]
-        target: [x86_64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-apple-darwin, aarch64-apple-darwin]
+        target: [x86_64-unknown-linux-gnu, x86_64-pc-windows-msvc, aarch64-apple-darwin]
         include:
           - os: ubuntu-latest
             os_name: linux
@@ -49,11 +49,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload binaries
-        if: always()  # Ensure that this step runs even if the build fails
+        if: always()
         uses: actions/upload-artifact@v2
         with:
           name: binaries-${{ matrix.os_name }}-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release
+          path: |
+            target/${{ matrix.target }}/release/sc
+            target/${{ matrix.target }}/release/sc-serve
 
   docker:
 
