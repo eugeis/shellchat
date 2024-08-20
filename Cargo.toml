@@ -8,7 +8,7 @@ license = "MIT"
 homepage = "https://github.com/eugeis/shellchat"
 repository = "https://github.com/eugeis/shellchat"
 categories = ["command-line-utilities"]
-keywords = ["chatgpt", "llm", "cli", "gpt", "repl"]
+keywords = ["chatgpt", "llm", "cli", "gpt", "copilot"]
 readme = "README.md"
 
 [dependencies]
