@@ -1,3 +1,6 @@
+use crate::chatter::Chatter;
+use crate::command::IS_STDOUT_TERMINAL;
+use crate::defaults::DEFAULT_API_KEY;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -27,4 +30,22 @@ impl ClientCli {
             .join(" ");
         text
     }
+}
+
+pub async fn client(cli: ClientCli) {
+    if !*IS_STDOUT_TERMINAL {
+        eprintln!("I can't recognize an terminal");
+        return;
+    }
+    let text = cli.text();
+    if text.is_empty() {
+        eprintln!("How can I assist you in your shell?");
+        return;
+    };
+    let api_key = cli
+        .key
+        .clone()
+        .unwrap_or_else(|| DEFAULT_API_KEY.to_string()); // Add this line
+    let chatter = Chatter::new(&cli.endpoint(), &api_key);
+    let _ = chatter.shell_execute(&text).await;
 }
