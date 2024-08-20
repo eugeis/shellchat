@@ -8,6 +8,7 @@ on:
 jobs:
   release:
     name: Publish to GitHub Release
+    continue-on-error: true
     permissions:
       contents: write
     outputs:
@@ -44,7 +45,6 @@ jobs:
             cargo-flags: ""
           - target: i686-pc-windows-msvc
             os: windows-latest
-            use-cross: true
             cargo-flags: ""
           - target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
@@ -108,6 +108,8 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          OPENSSL_DIR: /usr/lib/ssl
         run: $BUILD_CMD build --locked --release --target=${{ matrix.target }} ${{ matrix.cargo-flags }} --bins
 
       - name: Build Archive
@@ -115,7 +117,7 @@ jobs:
         id: package
         env:
           target: ${{ matrix.target }}
-          version:  ${{ steps.check-tag.outputs.version }}
+          version: ${{ steps.check-tag.outputs.version }}
         run: |
           set -euxo pipefail
 
