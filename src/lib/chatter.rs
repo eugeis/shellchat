@@ -1,14 +1,14 @@
-use std::process;
-use inquire::{Select};
-use log::debug;
-use reqwest::Client;
 use crate::command;
+use crate::command::run_command;
 use crate::command::SHELL;
 use crate::common::ShellRequest;
 use crate::common::ShellResponse;
 use crate::common::HEADER_API_KEY;
 use crate::spinner::create_spinner;
-use crate::command::run_command;
+use inquire::Select;
+use log::debug;
+use reqwest::Client;
+use std::process;
 
 #[derive(Debug)]
 pub struct Chatter {
@@ -64,7 +64,7 @@ impl Chatter {
                 eval_str.trim(),
                 vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
             )
-                .prompt()?;
+            .prompt()?;
 
             match answer {
                 "✅ Execute" => {

@@ -1,14 +1,13 @@
-use std::fs;
-use std::sync::Arc;
-use actix_web::{Responder, web};
+use crate::common::{ShellRequest, ShellResponse, HEADER_API_KEY};
+use crate::prompts::Prompts;
+use crate::providers::{ProviderApi, ProviderConfig};
+use actix_web::{web, Responder};
 use clap::Parser;
 use fancy_regex::Regex;
 use serde::Deserialize;
+use std::fs;
+use std::sync::Arc;
 use tracing::{error, info};
-use crate::common::{HEADER_API_KEY, ShellRequest, ShellResponse};
-use crate::prompts::Prompts;
-use crate::providers::{ProviderApi, ProviderConfig};
-
 
 lazy_static::lazy_static! {
     pub static ref CODE_BLOCK_RE: Regex = Regex::new(r"(?ms)```\w*(.*)```").unwrap();
@@ -23,8 +22,8 @@ impl Config {
     fn from_yaml(file_path: &str) -> Self {
         let config_content = fs::read_to_string(file_path)
             .unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path));
-        serde_yaml::from_str(&config_content).
-            unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path))
+        serde_yaml::from_str(&config_content)
+            .unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path))
     }
 }
 
@@ -66,12 +65,15 @@ pub async fn chat(
                     eval_str = extract_block(&eval_str);
                 }
             }
-            info!("{}/{}: {} => {}", &request.os, &request.shell, &&request.prompt, &eval_str);
+            info!(
+                "{}/{}: {} => {}",
+                &request.os, &request.shell, &&request.prompt, &eval_str
+            );
             ShellResponse {
                 result: eval_str,
                 error: String::new(),
             }
-        },
+        }
         Err(err) => {
             error!("Error calling provider: {}", err);
 
@@ -79,7 +81,7 @@ pub async fn chat(
                 result: String::new(),
                 error: err,
             }
-        },
+        }
     };
 
     actix_web::HttpResponse::Ok().json(response)

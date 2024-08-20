@@ -1,7 +1,7 @@
-use std::{env, ffi::OsStr, process::Command};
+use anyhow::Result;
 use std::collections::HashMap;
 use std::io::IsTerminal;
-use anyhow::Result;
+use std::{env, ffi::OsStr, process::Command};
 
 lazy_static::lazy_static! {
     pub static ref OS: String = detect_os();

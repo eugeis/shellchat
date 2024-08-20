@@ -1,7 +1,7 @@
 pub mod client;
 
-pub mod tracing;
 pub mod server;
+pub mod tracing;
 
 pub mod command;
 

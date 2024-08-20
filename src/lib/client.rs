@@ -19,8 +19,12 @@ impl ClientCli {
     }
 
     pub fn text(&self) -> String {
-        let text = self.text.iter().map(|x| x.trim()
-            .to_string()).collect::<Vec<String>>().join(" ");
+        let text = self
+            .text
+            .iter()
+            .map(|x| x.trim().to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
         text
     }
 }

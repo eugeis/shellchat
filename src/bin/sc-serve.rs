@@ -1,11 +1,11 @@
-use std::sync::Arc;
-use actix_web::{App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
 use clap::Parser;
-use sc_lib::prompts::Prompts;
-use sc_lib::providers::{new_provider};
 use sc_lib::defaults::DEFAULT_API_KEY;
-use sc_lib::server::{AppConfig, chat, ServerCli};
+use sc_lib::prompts::Prompts;
+use sc_lib::providers::new_provider;
+use sc_lib::server::{chat, AppConfig, ServerCli};
 use sc_lib::tracing::{setup_tracing_console, setup_tracing_file_console};
+use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -22,7 +22,11 @@ async fn main() -> std::io::Result<()> {
     }
 
     let config = cli.config();
-    let key = Arc::new(cli.key.clone().unwrap_or_else(||  DEFAULT_API_KEY.to_string()));
+    let key = Arc::new(
+        cli.key
+            .clone()
+            .unwrap_or_else(|| DEFAULT_API_KEY.to_string()),
+    );
 
     let app_config = Arc::new(AppConfig {
         provider: new_provider(&config.provider),
@@ -37,7 +41,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(key.clone()))
             .route("/", web::post().to(chat))
     })
-        .bind(endpoint)?
-        .run()
-        .await
+    .bind(endpoint)?
+    .run()
+    .await
 }

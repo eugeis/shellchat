@@ -1,9 +1,12 @@
-use std::future::Future;
+use crate::command::IS_STDOUT_TERMINAL;
 use anyhow::Result;
 use crossterm::{cursor, queue, style, terminal};
-use std::{io::{stdout, Write}, time::Duration};
+use std::future::Future;
+use std::{
+    io::{stdout, Write},
+    time::Duration,
+};
 use tokio::{sync::mpsc, time::interval};
-use crate::command::IS_STDOUT_TERMINAL;
 
 pub struct SpinnerInner {
     index: usize,
@@ -27,7 +30,12 @@ impl SpinnerInner {
         let mut writer = stdout();
         let frame = Self::DATA[self.index % Self::DATA.len()];
         let dots = ".".repeat((self.index / 5) % 4);
-        let line = format!("{frame} {message:<3}{dots}", frame = frame, message = self.message, dots = dots);
+        let line = format!(
+            "{frame} {message:<3}{dots}",
+            frame = frame,
+            message = self.message,
+            dots = dots
+        );
         queue!(writer, cursor::MoveToColumn(0), style::Print(line),)?;
         if self.index == 0 {
             queue!(writer, cursor::Hide)?;
@@ -123,8 +131,8 @@ async fn run_spinner(message: String, mut rx: mpsc::UnboundedReceiver<SpinnerEve
 }
 
 pub async fn run_with_spinner<F, T>(task: F, spinner_message: &str) -> Result<T>
-    where
-        F: Future<Output = Result<T>>,
+where
+    F: Future<Output = Result<T>>,
 {
     if *IS_STDOUT_TERMINAL {
         let spinner = create_spinner(spinner_message).await;
