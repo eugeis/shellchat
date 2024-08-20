@@ -12,7 +12,7 @@ use std::process;
 
 #[derive(Debug)]
 pub struct Chatter {
-    endpoint: String,
+    url: String,
     shell: String,
     os: String,
     client: Client,
@@ -20,9 +20,9 @@ pub struct Chatter {
 }
 
 impl Chatter {
-    pub fn new(endpoint: &str, api_key: &str) -> Self {
+    pub fn new(url: &str, api_key: &str) -> Self {
         Chatter {
-            endpoint: endpoint.to_string(),
+            url: url.to_string(),
             shell: SHELL.name.clone(),
             os: String::from(command::OS.as_str()), // Using OS directly
             client: Client::new(),
@@ -41,7 +41,7 @@ impl Chatter {
 
     async fn chat(&self, prompt: &str, explain: bool) -> ShellResponse {
         self.client
-            .post(&self.endpoint)
+            .post(&self.url)
             .header(HEADER_API_KEY, &self.api_key)
             .json(&self.build_request(prompt, explain))
             .send()

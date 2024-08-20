@@ -110,11 +110,14 @@ pub fn extract_block(input: &str) -> String {
 pub struct ServerCli {
     #[clap(short = 'c', long, env = "CONFIG", default_value = "config.yaml")]
     pub config: String,
-    #[clap(short = 'a', long, env = "ADDRESS", default_value = "127.0.0.1")]
-    pub address: String,
-    #[clap(short = 'p', long, env = "PORT", default_value = "8080")]
-    pub port: String,
-    #[clap(short = 'k', long, env = "KEY")]
+    #[clap(
+        short = 'u',
+        long,
+        env = "API_URL",
+        default_value = "http://127.0.0.1:8080"
+    )]
+    pub url: String,
+    #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,
     #[clap(short = 'd', long, env = "LOGS_DIR")]
     pub logs_dir: Option<String>,
@@ -123,10 +126,6 @@ pub struct ServerCli {
 impl ServerCli {
     pub fn config(&self) -> Config {
         Config::from_yaml(&self.config)
-    }
-
-    pub fn endpoint(&self) -> String {
-        format!("{}:{}", &self.address, &self.port)
     }
 }
 
@@ -153,15 +152,13 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
         prompts: Prompts::from_yaml_content(include_str!("../../prompts.yaml")),
     });
 
-    let endpoint = &cli.endpoint();
-
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(app_config.clone()))
             .app_data(web::Data::new(key.clone()))
             .route("/", web::post().to(chat))
     })
-    .bind(endpoint)?
+    .bind(&cli.url)?
     .run()
     .await
 }

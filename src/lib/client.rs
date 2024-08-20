@@ -6,21 +6,20 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct ClientCli {
-    #[clap(short = 'a', long, env = "ADDRESS", default_value = "http://127.0.0.1")]
-    pub address: String,
-    #[clap(short = 'p', long, env = "PORT", default_value = "8080")]
-    pub port: String,
-    #[clap(short = 'k', long, env = "KEY")]
+    #[clap(
+        short = 'u',
+        long,
+        env = "API_URL",
+        default_value = "http://127.0.0.1:8080"
+    )]
+    pub url: String,
+    #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,
     #[clap(trailing_var_arg = true)]
     text: Vec<String>,
 }
 
 impl ClientCli {
-    pub fn endpoint(&self) -> String {
-        format!("{}:{}", &self.address, &self.port)
-    }
-
     pub fn text(&self) -> String {
         let text = self
             .text
@@ -46,6 +45,6 @@ pub async fn client(cli: ClientCli) {
         .key
         .clone()
         .unwrap_or_else(|| DEFAULT_API_KEY.to_string()); // Add this line
-    let chatter = Chatter::new(&cli.endpoint(), &api_key);
+    let chatter = Chatter::new(&cli.url, &api_key);
     let _ = chatter.shell_execute(&text).await;
 }
