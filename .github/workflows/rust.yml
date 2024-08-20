@@ -10,9 +10,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -28,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -57,52 +55,20 @@ jobs:
 
       - name: Upload binaries
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: binaries-${{ matrix.os }}-${{ matrix.target }}
           path: |
             target/${{ matrix.target }}/release/sc
             target/${{ matrix.target }}/release/sc-serve
 
-  docker:
-
-    runs-on: ubuntu-latest
-
-    needs: build
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: binaries-linux-x86_64-unknown-linux-gnu
-
-      - name: Build Docker image
-        run: docker build -t sc-serve .
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Docker image
-        run: |
-          docker tag sc-serve ghcr.io/${{ github.repository }}/sc-serve:latest
-          docker push ghcr.io/${{ github.repository }}/sc-serve:latest
-
   publish:
-
     runs-on: ubuntu-latest
-
     needs: build
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -113,3 +79,31 @@ jobs:
         run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries-ubuntu-latest-x86_64-unknown-linux-gnu
+
+      - name: Build Docker image
+        run: docker build -t sc-serve .
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: |
+          docker tag sc-serve ghcr.io/${{ github.repository }}/sc-serve:latest
+          docker push ghcr.io/${{ github.repository }}/sc-serve:latest
