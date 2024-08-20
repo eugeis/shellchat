@@ -157,7 +157,7 @@ jobs:
 
   publish-crate:
     name: Publish to crates.io
-    if: ${{ needs.release.outputs.rc == 'false' }}
+    #if: ${{ needs.release.outputs.rc == 'false' }}
     runs-on: ubuntu-latest
     needs: release
     steps:
