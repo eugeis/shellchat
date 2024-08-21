@@ -25,9 +25,9 @@ impl Config {
         let absolute_path = fs::canonicalize(file_path)
             .unwrap_or_else(|_| panic!("Failed to resolve the absolute path: {}", file_path));
         let config_content = fs::read_to_string(absolute_path.to_str().unwrap())
-            .unwrap_or_else(|_| panic!("Failed to read the configuration file: {}", file_path));
+            .unwrap_or_else(|_| panic!("Failed to read the configuration file: {:?}", &absolute_path));
         serde_yaml::from_str(&config_content)
-            .unwrap_or_else(|_| panic!("Failed to parse the configuration file: {}", file_path))
+            .unwrap_or_else(|_| panic!("Failed to parse the configuration file: {:?}", &absolute_path))
     }
 }
 
