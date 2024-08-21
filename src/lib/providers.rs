@@ -15,17 +15,17 @@ pub trait ProviderApi {
 pub enum ProviderConfig {
     OpenAI {
         api_key: String,
-        base_url: String,
+        api_url: String,
         model: String,
     },
     AzureOpenAI {
         api_key: String,
-        base_url: String,
+        api_url: String,
         model: String,
     },
     Ollama {
         api_key: String,
-        base_url: String,
+        api_url: String,
         model: String,
     },
 }
@@ -94,7 +94,7 @@ pub fn new_provider(provider_type: &ProviderConfig) -> Arc<dyn ProviderApi + Sen
     let provider: Arc<dyn ProviderApi + Send + Sync> = match provider_type {
         ProviderConfig::AzureOpenAI {
             api_key,
-            base_url,
+            api_url: base_url,
             model,
         } => Arc::new(AzureOpenAI {
             client,
