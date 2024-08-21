@@ -112,7 +112,7 @@ pub fn extract_block(input: &str) -> String {
 pub struct ServerCli {
     #[clap(short = 'c', long, env = "CONFIG", default_value = "config.yaml")]
     pub config: String,
-    #[clap(short = 'u', long, env = "API_URL", default_value = "0.0.0.0:8080")]
+    #[clap(short = 'u', long, env = "API_URL", default_value = "127.0.0.1:8080")]
     pub url: String,
     #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,
@@ -138,6 +138,14 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
     }
 
     let config = cli.config();
+
+    let provider = new_provider(&config.provider);
+
+    const INIT_MESSAGE: &str = "hi";
+    let data = provider.call("", INIT_MESSAGE).await
+        .expect("Provider is not responding");
+    info!("{}", format!("{}: {}", INIT_MESSAGE, data));
+
     let key = Arc::new(
         cli.key
             .clone()
@@ -145,7 +153,7 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
     );
 
     let app_config = Arc::new(AppConfig {
-        provider: new_provider(&config.provider),
+        provider,
         prompts: Prompts::from_yaml_content(include_str!("../../prompts.yaml")),
     });
 
