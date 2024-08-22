@@ -1,0 +1,7 @@
+services:
+  shell-chat:
+    image: shellchat
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${PWD}/config.yaml:/app/config.yaml
