@@ -139,11 +139,15 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
 
     let config = cli.config();
 
+    info!("{:?}", config.provider);
+
     let provider = new_provider(&config.provider);
 
     const INIT_MESSAGE: &str = "hi";
-    let data = provider.call("", INIT_MESSAGE).await
-        .expect("Provider is not responding");
+    let data = provider.call("", INIT_MESSAGE).await.unwrap_or_else(|err| {
+        error!("Provider is not responding: {}", err);
+        panic!("Provider is not responding: {}", err);
+    });
     info!("{}", format!("{}: {}", INIT_MESSAGE, data));
 
     let key = Arc::new(
