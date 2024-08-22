@@ -88,11 +88,11 @@ pub async fn chat(
             }
         }
         Err(err) => {
-            error!("Error calling provider: {}", err);
+            error!("Error calling provider: {:?}", err);
 
             ShellResponse {
                 result: String::new(),
-                error: err,
+                error: err.to_string(),
             }
         }
     };
@@ -147,17 +147,8 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
     }
 
     let config = cli.config();
-
-    info!("{:?}", config.provider);
-
     let provider = new_provider(&config.provider);
-
-    const INIT_MESSAGE: &str = "hi";
-    let data = provider.call("", INIT_MESSAGE).await.unwrap_or_else(|err| {
-        error!("Provider is not responding: {}", err);
-        panic!("Provider is not responding: {}", err);
-    });
-    info!("{}", format!("{}: {}", INIT_MESSAGE, data));
+    provide_check(&provider).await;
 
     let key = Arc::new(
         cli.key
@@ -179,4 +170,13 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
     .bind(&cli.url)?
     .run()
     .await
+}
+
+async fn provide_check(provider: &Arc<dyn ProviderApi + Send + Sync>) {
+    const INIT_MESSAGE: &str = "hi";
+    let data = provider.call("", INIT_MESSAGE).await.unwrap_or_else(|err| {
+        error!("Provider is not responding: {:?}", err);
+        panic!("Provider is not responding: {:?}", err);
+    });
+    info!("{}", format!("{}: {}", INIT_MESSAGE, data));
 }

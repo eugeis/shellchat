@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "shellchat"
-version = "1.0.11"
+version = "1.0.12"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -1768,6 +1768,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-appender",

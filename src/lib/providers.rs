@@ -4,10 +4,21 @@ use serde::Deserialize;
 use serde_json::json;
 use std::panic::panic_any;
 use std::sync::Arc;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ProviderError {
+    #[error("HTTP Request Error: {0}")]
+    RequestError(#[from] reqwest::Error),
+    #[error("JSON Parsing Error: {0}")]
+    JsonError(#[from] serde_json::Error),
+    #[error("Unexpected Response Structure")]
+    UnexpectedResponse(String),
+}
 
 #[async_trait]
 pub trait ProviderApi {
-    async fn call(&self, role_prompt: &str, user_prompt: &str) -> Result<String, String>;
+    async fn call(&self, role_prompt: &str, user_prompt: &str) -> Result<String, ProviderError>;
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -55,7 +66,7 @@ pub struct Message {
 
 #[async_trait]
 impl ProviderApi for AzureOpenAI {
-    async fn call(&self, role_prompt: &str, user_prompt: &str) -> Result<String, String> {
+    async fn call(&self, role_prompt: &str, user_prompt: &str) -> Result<String, ProviderError> {
         let messages = vec![
             json!({ "role": "system", "content": role_prompt }),
             json!({ "role": "user", "content": user_prompt }),
@@ -72,19 +83,21 @@ impl ProviderApi for AzureOpenAI {
             .header("api-key", &self.api_key)
             .json(&body)
             .send()
-            .await
-            .map_err(|e| e.to_string())?
+            .await?
             .text()
-            .await
-            .map_err(|e| e.to_string())?;
+            .await?;
 
-        let resp: CompletionResponse =
-            serde_json::from_str(&response).map_err(|e| e.to_string())?;
-
-        if let Some(choice) = resp.choices.first() {
-            Ok(choice.message.content.clone())
-        } else {
-            Ok("".to_string())
+        match serde_json::from_str::<CompletionResponse>(&response) {
+            Ok(resp) => {
+                if let Some(choice) = resp.choices.first() {
+                    Ok(choice.message.content.clone())
+                } else {
+                    Err(ProviderError::UnexpectedResponse(response.to_string()))
+                }
+            }
+            Err(_) => {
+                Err(ProviderError::UnexpectedResponse(response.to_string()))
+            }
         }
     }
 }

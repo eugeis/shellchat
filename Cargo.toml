@@ -1,6 +1,6 @@
 [package]
 name = "shellchat"
-version = "1.0.11"
+version = "1.0.12"
 edition = "2021"
 authors = ["Eugen Eisler <eoeisler@gmail.com>"]
 description = "Transforms natural language into shell commands for execution or explanation."
@@ -30,6 +30,7 @@ crossterm = "0.28.1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-appender = "0.2"
+thiserror = "1.0.63"
 
 [lib]
 name = "sc_lib"
