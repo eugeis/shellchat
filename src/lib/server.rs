@@ -1,4 +1,4 @@
-use crate::common::{ShellRequest, ShellResponse, HEADER_API_KEY};
+use crate::common::{ShellRequest, ShellResponse, HEADER_API_KEY, ShellError};
 use crate::defaults::DEFAULT_API_KEY;
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
@@ -79,12 +79,12 @@ pub async fn chat(
                 }
             }
             info!(
-                "{}/{}: {} => {}",
-                &request.os, &request.shell, &&request.prompt, &eval_str
-            );
+            "{}/{}: {} => {}",
+            &request.os, &request.shell, &&request.prompt, &eval_str
+        );
             ShellResponse {
                 result: eval_str,
-                error: String::new(),
+                error: None,
             }
         }
         Err(err) => {
@@ -92,7 +92,10 @@ pub async fn chat(
 
             ShellResponse {
                 result: String::new(),
-                error: err.to_string(),
+                error: Some(ShellError {
+                    message: err.to_string(),
+                    code: None, // Optionally provide a specific error code
+                }),
             }
         }
     };

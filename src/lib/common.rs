@@ -13,5 +13,11 @@ pub struct ShellRequest {
 #[derive(Serialize, Deserialize)]
 pub struct ShellResponse {
     pub result: String,
-    pub error: String,
+    pub error: Option<ShellError>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ShellError {
+    pub message: String,
+    pub code: Option<u16>, // You can include an error code if applicable
 }
