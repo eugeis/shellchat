@@ -33,13 +33,13 @@ tracing-appender = "0.2"
 thiserror = "1.0.63"
 
 [lib]
-name = "sc_lib"
+name = "shc_lib"
 path = "src/lib/mod.rs"
 
 [[bin]]
-name = "sc-serve"
-path = "src/bin/sc-serve.rs"
+name = "shc-serve"
+path = "src/bin/sch-serve.rs"
 
 [[bin]]
-name = "sc"
-path = "src/bin/sc.rs"
+name = "shc"
+path = "src/bin/sch.rs"

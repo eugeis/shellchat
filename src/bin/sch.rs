@@ -1,5 +1,5 @@
 use clap::Parser;
-use sc_lib::client::{client, ClientCli};
+use shc_lib::client::{client, ClientCli};
 
 #[tokio::main]
 async fn main() {
