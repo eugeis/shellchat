@@ -21,7 +21,7 @@ pub struct Config {
 }
 
 impl Config {
-    fn from_yaml(file_path: &str) -> Self {
+    pub fn from_yaml(file_path: &str) -> Self {
         let absolute_path = fs::canonicalize(file_path)
             .unwrap_or_else(|_| panic!("Failed to resolve the absolute path: {}", file_path));
         let config_content =

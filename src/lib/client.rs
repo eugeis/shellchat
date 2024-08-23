@@ -54,10 +54,24 @@ pub async fn client(cli: ClientCli) {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+    use actix_web::{App, test, web};
+    use crate::common::{HEADER_API_KEY, Question};
+    use crate::prompts::Prompts;
+    use crate::providers::{ProviderApi, ProviderError};
+    use crate::server::{AppConfig, chat, Config};
     use super::*;
 
+    const PROMPTS_CONTENT: &str = r#"
+        explain: "Explain prompt"
+        os_prompt: "Operating system prompt for {os} and {shell}"
+        combinator_powershell: "PowerShell combinator"
+        combinator_default: "Default combinator"
+        additional_instructions: "Additional instructions"
+        "#;
+
     #[test]
-    fn test_client_cli_text() {
+    async fn test_client_cli_text() {
         let args = ClientCli {
             url: "http://localhost:8080".to_string(),
             key: None,
@@ -77,5 +91,101 @@ mod tests {
 
         let stdout_terminal_state = *IS_STDOUT_TERMINAL;
         assert!(stdout_terminal_state);
+    }
+
+    #[test]
+    async fn test_client_cli_text_empty() {
+        let args = ClientCli {
+            url: "http://localhost:8080".to_string(),
+            key: None,
+            text: vec![],
+        };
+        assert_eq!(args.text(), "");
+    }
+
+    struct MockProvider;
+
+    #[async_trait::async_trait]
+    impl ProviderApi for MockProvider {
+        async fn call(
+            &self,
+            _role_prompt: &str,
+            _user_prompt: &str,
+        ) -> Result<String, ProviderError> {
+            Ok("Mock response".to_string())
+        }
+    }
+
+    #[actix_web::test]
+    async fn test_chat_invalid_body() {
+        let app_config = Arc::new(AppConfig {
+            provider: Arc::new(MockProvider {}),
+            prompts: Prompts::from_yaml_content(PROMPTS_CONTENT),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_config.clone()))
+                .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
+                .route("/", web::post().to(chat)),
+        ).await;
+
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_payload("invalid_body")
+            .insert_header((HEADER_API_KEY, DEFAULT_API_KEY))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_client_error());
+    }
+
+    #[test]
+    async fn test_config_from_yaml_file_not_found() {
+        let result = std::panic::catch_unwind(|| Config::from_yaml("non_existent_file.yaml"));
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_chat_with_error_response() {
+        let app_config = Arc::new(AppConfig {
+            provider: Arc::new(MockErrorProvider {}),
+            prompts: Prompts::from_yaml_content(PROMPTS_CONTENT),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_config.clone()))
+                .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
+                .route("/", web::post().to(chat)),
+        ).await;
+
+        let question = Question {
+            os: "Linux".to_string(),
+            shell: "bash".to_string(),
+            prompt: "What is Rust?".to_string(),
+            explain: false,
+        };
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(&question)
+            .insert_header((HEADER_API_KEY, DEFAULT_API_KEY))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_server_error());
+    }
+
+    struct MockErrorProvider;
+
+    #[async_trait::async_trait]
+    impl ProviderApi for MockErrorProvider {
+        async fn call(
+            &self,
+            _role_prompt: &str,
+            _user_prompt: &str,
+        ) -> Result<String, ProviderError> {
+            Err(ProviderError::UnexpectedResponse("error".to_string()))
+        }
     }
 }
