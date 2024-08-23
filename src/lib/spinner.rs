@@ -143,3 +143,26 @@ where
         task.await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_create_spinner() {
+        let spinner = create_spinner("Test").await;
+        assert!(spinner.set_message("New message".to_string()).is_ok());
+        spinner.stop();
+    }
+
+    #[tokio::test]
+    async fn test_run_with_spinner() {
+        async fn sample_task() -> Result<String> {
+            Ok("Completed".to_string())
+        }
+
+        let result = run_with_spinner(sample_task(), "Running").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Completed");
+    }
+}

@@ -260,4 +260,47 @@ mod tests {
             Ok("Mock response".to_string())
         }
     }
+
+    #[test]
+    async fn  test_extract_block() {
+        let input = "Some text\n```\nCode block\n```";
+        let output = extract_block(input);
+        assert_eq!(output, "Code block");
+
+        let input_no_block = "Some text without code block";
+        let output_no_block = extract_block(input_no_block);
+        assert_eq!(output_no_block, input_no_block);
+    }
+
+    #[actix_web::test]
+    async fn test_chat_with_explain() {
+        let app_config = Arc::new(AppConfig {
+            provider: Arc::new(MockProvider {}),
+            prompts: Prompts::from_yaml_content(PROMPTS_CONTENT),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_config.clone()))
+                .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
+                .route("/", web::post().to(chat)),
+        )
+            .await;
+
+        let question = Question {
+            os: "Linux".to_string(),
+            shell: "bash".to_string(),
+            prompt: "What is Rust?".to_string(),
+            explain: true,
+        };
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(&question)
+            .insert_header((HEADER_API_KEY, DEFAULT_API_KEY))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
 }

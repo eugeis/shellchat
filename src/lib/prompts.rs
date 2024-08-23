@@ -83,4 +83,10 @@ mod tests {
         assert!(shell_prompt.contains("Default combinator"));
         assert!(shell_prompt.contains("Additional instructions"));
     }
+    #[test]
+    fn test_prompt_from_yaml_file_not_found() {
+        let result = std::panic::catch_unwind(|| Prompts::from_yaml("non_existent_file.yaml"));
+        assert!(result.is_err());
+    }
+
 }
