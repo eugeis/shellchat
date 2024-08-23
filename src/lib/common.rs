@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 pub const HEADER_API_KEY: &str = "api-key";
 
 #[derive(Serialize, Deserialize)]
-pub struct ShellRequest {
+pub struct Question {
     pub os: String,
     pub shell: String,
     pub prompt: String,
@@ -11,13 +11,13 @@ pub struct ShellRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ShellResponse {
+pub struct Answer {
     pub result: String,
-    pub error: Option<ShellError>,
+    pub error: Option<Error>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ShellError {
+pub struct Error {
     pub message: String,
     pub code: Option<u16>, // You can include an error code if applicable
 }

@@ -1,8 +1,8 @@
 use crate::command;
 use crate::command::run_command;
 use crate::command::SHELL;
-use crate::common::ShellRequest;
-use crate::common::ShellResponse;
+use crate::common::Question;
+use crate::common::Answer;
 use crate::common::HEADER_API_KEY;
 use crate::spinner::create_spinner;
 use inquire::Select;
@@ -30,8 +30,8 @@ impl Chatter {
         }
     }
 
-    fn build_request(&self, prompt: &str, explain: bool) -> ShellRequest {
-        ShellRequest {
+    fn build_request(&self, prompt: &str, explain: bool) -> Question {
+        Question {
             os: self.os.clone(),
             shell: self.shell.clone(),
             prompt: prompt.to_string(),
@@ -39,7 +39,7 @@ impl Chatter {
         }
     }
 
-    async fn chat(&self, prompt: &str, explain: bool) -> ShellResponse {
+    async fn chat(&self, prompt: &str, explain: bool) -> Answer {
         self.client
             .post(&self.url)
             .header(HEADER_API_KEY, &self.api_key)

@@ -1,4 +1,4 @@
-use crate::common::{ShellRequest, ShellResponse, HEADER_API_KEY, ShellError};
+use crate::common::{Question, Answer, HEADER_API_KEY, Error};
 use crate::defaults::DEFAULT_API_KEY;
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
@@ -46,7 +46,7 @@ pub struct AppConfig {
 }
 
 pub async fn chat(
-    request: web::Json<ShellRequest>,
+    request: web::Json<Question>,
     data: web::Data<Arc<AppConfig>>,
     key: web::Data<Arc<String>>,
     req: actix_web::HttpRequest,
@@ -82,7 +82,7 @@ pub async fn chat(
             "{}/{}: {} => {}",
             &request.os, &request.shell, &&request.prompt, &eval_str
         );
-            ShellResponse {
+            Answer {
                 result: eval_str,
                 error: None,
             }
@@ -90,9 +90,9 @@ pub async fn chat(
         Err(err) => {
             error!("Error calling provider: {:?}", err);
 
-            ShellResponse {
+            Answer {
                 result: String::new(),
-                error: Some(ShellError {
+                error: Some(Error {
                     message: err.to_string(),
                     code: None, // Optionally provide a specific error code
                 }),
