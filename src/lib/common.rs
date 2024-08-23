@@ -11,12 +11,6 @@ pub struct Question {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Answer {
-    pub result: String,
-    pub error: Option<Error>,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct Error {
     pub message: String,
     pub code: Option<u16>, // You can include an error code if applicable

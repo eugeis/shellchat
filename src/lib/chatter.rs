@@ -2,15 +2,15 @@ use crate::command;
 use crate::command::run_command;
 use crate::command::SHELL;
 use crate::common::Question;
-use crate::common::Answer;
 use crate::common::HEADER_API_KEY;
 use crate::spinner::create_spinner;
+use anyhow::{anyhow, Result};
+use async_recursion::async_recursion;
 use inquire::Select;
 use log::debug;
 use reqwest::Client;
+use std::error::Error;
 use std::process;
-use anyhow::{anyhow, Result};
-
 
 #[derive(Debug)]
 pub struct Chatter {
@@ -32,7 +32,7 @@ impl Chatter {
         }
     }
 
-    async fn chat(&self, prompt: &str, explain: bool) -> Result<Answer> {
+    pub async fn chat(&self, prompt: &str, explain: bool) -> Result<String, anyhow::Error> {
         let response = self
             .client
             .post(&self.url)
@@ -44,75 +44,63 @@ impl Chatter {
         match response {
             Ok(res) => {
                 let status = res.status();
-                let text = res.text().await.unwrap_or_else(|_| "Failed to read response text".to_string());
+                let text = res
+                    .text()
+                    .await
+                    .unwrap_or_else(|_| "Failed to read the answer".to_string());
 
                 if status.is_success() {
-                    let json: Result<Answer, _> = serde_json::from_str(&text);
-                    match json {
-                        Ok(answer) => Ok(answer),
-                        Err(err) => Err(anyhow!("Failed to parse server response: {}\nResponse text: {}", err, text)),
-                    }
+                    Ok(text)
                 } else {
-                    Err(anyhow!("Server returned an error: {}\nResponse text: {}", status, text))
+                    Err(anyhow!("{}: {}", status, text))
                 }
             }
             Err(err) => {
                 if err.is_connect() || err.is_timeout() {
-                    Err(anyhow!("Server not available. Please check the server status and try again."))
+                    Err(anyhow!(
+                        "Server not available. Please check the server status and try again."
+                    ))
                 } else {
-                    Err(anyhow!("Request to server failed: {}", err))
+                    Err(anyhow!("Request to the server failed: {}", err))
                 }
             }
         }
     }
 
-    #[async_recursion::async_recursion]
-    pub async fn shell_execute(&self, text: &str) -> Result<()> {
+    #[async_recursion]
+    pub async fn shell_execute(&self, text: &str) -> Result<(), Box<dyn Error>> {
         let spinner = create_spinner("Translating").await;
         let result = self.chat(text, false).await;
         spinner.stop();
 
         match result {
-            Ok(answer) => {
-                let eval_str = answer.result;
+            Ok(eval_str) => loop {
+                let answer = Select::new(
+                    eval_str.trim(),
+                    vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
+                )
+                .prompt()?;
 
-                if let Some(error) = answer.error {
-                    eprintln!("Server error: {}", error.message);
-                    return Err(anyhow!(error.message));
-                }
-
-                loop {
-                    let answer = Select::new(
-                        eval_str.trim(),
-                        vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
-                    )
-                        .prompt()?;
-
-                    match answer {
-                        "✅ Execute" => {
-                            debug!("{} {:?}", SHELL.cmd, &[&SHELL.arg, &eval_str]);
-                            let code = run_command(&SHELL.cmd, &[&SHELL.arg, &eval_str], None)?;
-                            if code != 0 {
-                                process::exit(code);
-                            }
+                match answer {
+                    "✅ Execute" => {
+                        debug!("{} {:?}", SHELL.cmd, &[&SHELL.arg, &eval_str]);
+                        let code = run_command(&SHELL.cmd, &[&SHELL.arg, &eval_str], None)?;
+                        if code != 0 {
+                            process::exit(code);
                         }
-                        "📖 Explain" => {
-                            let answer = self.chat(&eval_str, true).await?;
-                            if let Some(error) = answer.error {
-                                eprintln!("Error: {}", error.message);
-                            } else {
-                                println!("{}", answer.result);
-                            }
-                            continue;
-                        }
-                        _ => {}
                     }
-                    break;
+                    "📖 Explain" => {
+                        let explain_result = self.chat(&eval_str, true).await?;
+                        println!("{}", explain_result);
+                        continue;
+                    }
+                    "❌ Cancel" => break,
+                    _ => {}
                 }
-            }
+                break;
+            },
             Err(err) => {
-                eprintln!("Error: {}", err);
-                return Err(err);
+                return Err(err.into());
             }
         }
         Ok(())

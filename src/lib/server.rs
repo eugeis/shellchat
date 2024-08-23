@@ -1,9 +1,9 @@
-use crate::common::{Question, Answer, HEADER_API_KEY, Error};
+use crate::common::{Question, HEADER_API_KEY};
 use crate::defaults::DEFAULT_API_KEY;
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
 use crate::tracing::{setup_tracing_console, setup_tracing_file_console};
-use actix_web::{web, App, HttpServer, Responder};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 use fancy_regex::Regex;
 use serde::Deserialize;
@@ -44,7 +44,6 @@ pub struct AppConfig {
     pub provider: Arc<dyn ProviderApi + Send + Sync>,
     pub prompts: Prompts,
 }
-
 pub async fn chat(
     request: web::Json<Question>,
     data: web::Data<Arc<AppConfig>>,
@@ -59,7 +58,8 @@ pub async fn chat(
 
     if api_key != key.as_str() {
         error!("Invalid API key: {}", api_key);
-        return actix_web::HttpResponse::Unauthorized().body("Invalid API key");
+        return HttpResponse::Unauthorized()
+            .body("Client version/build not compatible. Please use corresponding 'shc' client.");
     }
 
     let prompts = &data.prompts;
@@ -71,7 +71,7 @@ pub async fn chat(
         &prompts.explain
     };
 
-    let response = match provider.call(prompt, &request.prompt).await {
+    match provider.call(prompt, &request.prompt).await {
         Ok(mut eval_str) => {
             if !request.explain {
                 if let Ok(true) = CODE_BLOCK_RE.is_match(&eval_str) {
@@ -79,28 +79,16 @@ pub async fn chat(
                 }
             }
             info!(
-            "{}/{}: {} => {}",
-            &request.os, &request.shell, &&request.prompt, &eval_str
-        );
-            Answer {
-                result: eval_str,
-                error: None,
-            }
+                "{}/{}: {} => {}",
+                &request.os, &request.shell, &&request.prompt, &eval_str
+            );
+            HttpResponse::Ok().body(eval_str)
         }
         Err(err) => {
             error!("Error calling provider: {:?}", err);
-
-            Answer {
-                result: String::new(),
-                error: Some(Error {
-                    message: err.to_string(),
-                    code: None, // Optionally provide a specific error code
-                }),
-            }
+            HttpResponse::InternalServerError().body(format!("Error calling provider: {}", err))
         }
-    };
-
-    actix_web::HttpResponse::Ok().json(response)
+    }
 }
 
 pub fn extract_block(input: &str) -> String {

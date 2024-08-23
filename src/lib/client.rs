@@ -44,7 +44,10 @@ pub async fn client(cli: ClientCli) {
     let api_key = cli
         .key
         .clone()
-        .unwrap_or_else(|| DEFAULT_API_KEY.to_string()); // Add this line
+        .unwrap_or_else(|| DEFAULT_API_KEY.to_string());
     let chatter = Chatter::new(&cli.url, &api_key);
-    let _ = chatter.shell_execute(&text).await;
+    match chatter.shell_execute(&text).await {
+        Ok(_) => {}
+        Err(err) => eprintln!("Error: {}", err),
+    }
 }

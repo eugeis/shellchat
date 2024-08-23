@@ -95,9 +95,7 @@ impl ProviderApi for AzureOpenAI {
                     Err(ProviderError::UnexpectedResponse(response.to_string()))
                 }
             }
-            Err(_) => {
-                Err(ProviderError::UnexpectedResponse(response.to_string()))
-            }
+            Err(_) => Err(ProviderError::UnexpectedResponse(response.to_string())),
         }
     }
 }
