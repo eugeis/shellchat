@@ -88,5 +88,4 @@ mod tests {
         let result = std::panic::catch_unwind(|| Prompts::from_yaml("non_existent_file.yaml"));
         assert!(result.is_err());
     }
-
 }

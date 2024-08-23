@@ -262,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    async fn  test_extract_block() {
+    async fn test_extract_block() {
         let input = "Some text\n```\nCode block\n```";
         let output = extract_block(input);
         assert_eq!(output, "Code block");
@@ -285,7 +285,7 @@ mod tests {
                 .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
                 .route("/", web::post().to(chat)),
         )
-            .await;
+        .await;
 
         let question = Question {
             os: "Linux".to_string(),
@@ -302,5 +302,4 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
     }
-
 }

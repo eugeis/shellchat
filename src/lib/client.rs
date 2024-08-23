@@ -51,3 +51,32 @@ pub async fn client(cli: ClientCli) {
         Err(err) => eprintln!("Error: {}", err),
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_client_cli_text() {
+        let args = ClientCli {
+            url: "http://localhost:8080".to_string(),
+            key: None,
+            text: vec!["Hello, world!".to_string()],
+        };
+        assert_eq!(args.text(), "Hello, world!");
+    }
+
+    #[tokio::test]
+    async fn test_client() {
+        let cli = ClientCli {
+            url: "http://localhost:8080".to_string(),
+            key: Some("test_key".to_string()),
+            text: vec!["echo Hello".to_string()],
+        };
+        client(cli).await;
+
+        let stdout_terminal_state = *IS_STDOUT_TERMINAL;
+        assert!(stdout_terminal_state);
+    }
+}

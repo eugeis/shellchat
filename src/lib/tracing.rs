@@ -42,3 +42,4 @@ pub fn setup_tracing_console() {
         .with(tracing_subscriber::filter::LevelFilter::INFO) // Set log level
         .init();
 }
+
