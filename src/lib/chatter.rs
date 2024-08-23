@@ -55,16 +55,21 @@ impl Chatter {
     #[async_recursion::async_recursion]
     pub async fn shell_execute(&self, text: &str) -> anyhow::Result<()> {
         let spinner = create_spinner("Translating").await;
-        let response = self.chat(text, false).await;
-        let eval_str = response.result;
+        let answer = self.chat(text, false).await;
+        let eval_str = answer.result;
         spinner.stop();
+
+        if let Some(error) = answer.error {
+            eprintln!("Server error: {}", error.message);
+            return Err(anyhow::anyhow!(error.message));
+        }
 
         loop {
             let answer = Select::new(
                 eval_str.trim(),
                 vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
             )
-            .prompt()?;
+                .prompt()?;
 
             match answer {
                 "✅ Execute" => {
@@ -76,7 +81,11 @@ impl Chatter {
                 }
                 "📖 Explain" => {
                     let answer = self.chat(&eval_str, true).await;
-                    println!("{}", answer.result);
+                    if let Some(error) = answer.error {
+                        eprintln!("Error: {}", error.message);
+                    } else {
+                        println!("{}", answer.result);
+                    }
                     continue;
                 }
                 _ => {}
