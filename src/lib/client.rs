@@ -52,7 +52,6 @@ pub async fn client(cli: ClientCli) {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
