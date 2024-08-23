@@ -35,3 +35,52 @@ impl Prompts {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_prompt_from_yaml() {
+        let yaml_content = r#"
+        explain: "Explain prompt"
+        os_prompt: "Operating system prompt for {os} and {shell}"
+        combinator_powershell: "PowerShell combinator"
+        combinator_default: "Default combinator"
+        additional_instructions: "Additional instructions"
+        "#;
+
+        let prompts = Prompts::from_yaml_content(yaml_content);
+        assert_eq!(prompts.explain, "Explain prompt");
+        assert_eq!(
+            prompts.os_prompt,
+            "Operating system prompt for {os} and {shell}"
+        );
+        assert_eq!(prompts.combinator_powershell, "PowerShell combinator");
+        assert_eq!(prompts.combinator_default, "Default combinator");
+        assert_eq!(prompts.additional_instructions, "Additional instructions");
+    }
+
+    #[test]
+    fn test_shell_prompt() {
+        let yaml_content = r#"
+        explain: "Explain prompt"
+        os_prompt: "Operating system prompt for {os} and {shell}"
+        combinator_powershell: "PowerShell combinator"
+        combinator_default: "Default combinator"
+        additional_instructions: "Additional instructions"
+        "#;
+
+        let prompts = Prompts::from_yaml_content(yaml_content);
+
+        let shell_prompt = prompts.shell_prompt("Windows", "powershell");
+        assert!(shell_prompt.contains("Operating system prompt for Windows and powershell"));
+        assert!(shell_prompt.contains("PowerShell combinator"));
+        assert!(shell_prompt.contains("Additional instructions"));
+
+        let shell_prompt = prompts.shell_prompt("Linux", "bash");
+        assert!(shell_prompt.contains("Operating system prompt for Linux and bash"));
+        assert!(shell_prompt.contains("Default combinator"));
+        assert!(shell_prompt.contains("Additional instructions"));
+    }
+}

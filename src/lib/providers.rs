@@ -123,3 +123,29 @@ pub fn new_provider(provider_type: &ProviderConfig) -> Arc<dyn ProviderApi + Sen
     };
     provider
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockProvider;
+
+    #[async_trait::async_trait]
+    impl ProviderApi for MockProvider {
+        async fn call(
+            &self,
+            _role_prompt: &str,
+            _user_prompt: &str,
+        ) -> Result<String, ProviderError> {
+            Ok("Mock response".to_string())
+        }
+    }
+
+    #[tokio::test]
+    async fn test_provider_call() {
+        let provider = MockProvider;
+        let response = provider.call("", "test").await;
+        assert!(response.is_ok());
+        assert_eq!(response.unwrap(), "Mock response");
+    }
+}

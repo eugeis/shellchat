@@ -171,3 +171,93 @@ async fn provide_check(provider: &Arc<dyn ProviderApi + Send + Sync>) {
     });
     info!("{}", format!("{}: {}", INIT_MESSAGE, data));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::providers::ProviderError;
+    use actix_web::{test, web, App};
+
+    const PROMPTS_CONTENT: &str = r#"
+        explain: "Explain prompt"
+        os_prompt: "Operating system prompt for {os} and {shell}"
+        combinator_powershell: "PowerShell combinator"
+        combinator_default: "Default combinator"
+        additional_instructions: "Additional instructions"
+        "#;
+
+    #[actix_web::test]
+    async fn test_chat_success() {
+        let app_config = Arc::new(AppConfig {
+            provider: Arc::new(MockProvider {}),
+            prompts: Prompts::from_yaml_content(PROMPTS_CONTENT),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_config.clone()))
+                .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
+                .route("/", web::post().to(chat)),
+        )
+        .await;
+
+        let question = Question {
+            os: "Linux".to_string(),
+            shell: "bash".to_string(),
+            prompt: "What is Rust?".to_string(),
+            explain: false,
+        };
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(&question)
+            .insert_header((HEADER_API_KEY, DEFAULT_API_KEY))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_chat_invalid_api_key() {
+        let app_config = Arc::new(AppConfig {
+            provider: Arc::new(MockProvider {}),
+            prompts: Prompts::from_yaml_content(PROMPTS_CONTENT),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_config.clone()))
+                .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
+                .route("/", web::post().to(chat)),
+        )
+        .await;
+
+        let question = Question {
+            os: "Linux".to_string(),
+            shell: "bash".to_string(),
+            prompt: "What is Rust?".to_string(),
+            explain: false,
+        };
+        let req = test::TestRequest::post()
+            .uri("/")
+            .set_json(&question)
+            .insert_header((HEADER_API_KEY, "invalid_key"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_client_error());
+    }
+
+    struct MockProvider;
+
+    #[async_trait::async_trait]
+    impl ProviderApi for MockProvider {
+        async fn call(
+            &self,
+            _role_prompt: &str,
+            _user_prompt: &str,
+        ) -> Result<String, ProviderError> {
+            Ok("Mock response".to_string())
+        }
+    }
+}

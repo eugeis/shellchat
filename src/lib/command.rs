@@ -82,3 +82,29 @@ pub fn run_command<T: AsRef<OsStr>>(
         .status()?;
     Ok(status.code().unwrap_or_default())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_os() {
+        let os = detect_os();
+        assert!(!os.is_empty());
+    }
+
+    #[test]
+    fn test_detect_shell() {
+        let shell = detect_shell();
+        assert!(!shell.name.is_empty());
+        assert!(!shell.cmd.is_empty());
+        assert!(!shell.arg.is_empty());
+    }
+
+    #[test]
+    fn test_run_command() {
+        let result = run_command("echo", &["Hello, world!"], None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0);
+    }
+}

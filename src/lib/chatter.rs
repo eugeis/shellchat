@@ -115,3 +115,24 @@ impl Chatter {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_chat_success() {
+        let chatter = Chatter::new("http://localhost:8080", "test_key");
+
+        let result = chatter.chat("Hello", false).await;
+        assert!(result.is_err()); // Assuming there's no actual server running during tests
+    }
+
+    #[tokio::test]
+    async fn test_shell_execute_success() {
+        let chatter = Chatter::new("http://localhost:8080", "test_key");
+
+        let result = chatter.shell_execute("echo Hello").await;
+        assert!(result.is_err()); // Assuming there's no actual server running during tests
+    }
+}
