@@ -112,7 +112,7 @@ pub fn extract_block(input: &str) -> String {
 pub struct ServerCli {
     #[clap(short = 'c', long, env = "CONFIG", default_value = "config.yaml")]
     pub config: String,
-    #[clap(short = 'u', long, env = "API_URL", default_value = "127.0.0.1:8080")]
+    #[clap(short = 'u', long, env = "API_URL", default_value = "0.0.0.0:8080")]
     pub url: String,
     #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,

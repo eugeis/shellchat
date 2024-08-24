@@ -2,7 +2,10 @@ FROM rust:bookworm AS builder
 
 WORKDIR /app
 
-COPY ./ .
+COPY ./src ./src
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./prompts.yaml ./prompts.yaml
 
 RUN cargo build --release --bins
 
@@ -17,8 +20,7 @@ RUN update-ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/sc-serve ./
-COPY --from=builder /app/target/release/sc ./
+COPY --from=builder /app/target/release/shc-serve ./
+COPY --from=builder /app/target/release/shc ./
 
-
-CMD ["./sc-serve"]
+CMD ["./shc-serve"]
