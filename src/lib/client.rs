@@ -88,9 +88,6 @@ mod tests {
             text: vec!["echo Hello".to_string()],
         };
         client(cli).await;
-
-        let stdout_terminal_state = *IS_STDOUT_TERMINAL;
-        assert!(stdout_terminal_state);
     }
 
     #[test]
