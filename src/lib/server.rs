@@ -3,12 +3,14 @@ use crate::defaults::DEFAULT_API_KEY;
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
 use crate::tracing::{setup_tracing_console, setup_tracing_file_console};
+use crate::notifier::{RequestNotifier};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 use fancy_regex::Regex;
 use serde::Deserialize;
 use std::fs;
 use std::sync::Arc;
+use reqwest::Client;
 use tracing::{error, info};
 
 lazy_static::lazy_static! {
@@ -118,6 +120,8 @@ pub struct ServerCli {
     pub key: Option<String>,
     #[clap(short = 'd', long, env = "LOGS_DIR")]
     pub logs_dir: Option<String>,
+    #[clap(short = 'n', long, env = "NOTIFIER_URL")]
+    pub notifier_url: Option<String>,
 }
 
 impl ServerCli {
@@ -152,15 +156,33 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
         prompts: Prompts::from_yaml_content(include_str!("../../prompts.yaml")),
     });
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(app_config.clone()))
-            .app_data(web::Data::new(key.clone()))
-            .route("/", web::post().to(chat))
-    })
-    .bind(&cli.url)?
-    .run()
-    .await
+    let client = Arc::new(Client::new());
+
+    match cli.notifier_url {
+        Some(notifier_url) => {
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(web::Data::new(app_config.clone()))
+                    .app_data(web::Data::new(key.clone()))
+                    .wrap(RequestNotifier::new(notifier_url.clone(), client.clone()))
+                    .route("/", web::post().to(chat))
+            })
+                .bind(&cli.url)?
+                .run()
+                .await
+        }
+        None => {
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(web::Data::new(app_config.clone()))
+                    .app_data(web::Data::new(key.clone()))
+                    .route("/", web::post().to(chat))
+            })
+                .bind(&cli.url)?
+                .run()
+                .await
+        }
+    }
 }
 
 async fn provide_check(provider: &Arc<dyn ProviderApi + Send + Sync>) {

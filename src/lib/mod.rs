@@ -16,3 +16,5 @@ pub mod common;
 pub mod chatter;
 
 pub mod defaults;
+
+pub mod notifier;
