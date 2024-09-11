@@ -54,13 +54,13 @@ pub async fn client(cli: ClientCli) {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-    use actix_web::{App, test, web};
-    use crate::common::{HEADER_API_KEY, Question};
+    use super::*;
+    use crate::common::{Question, HEADER_API_KEY};
     use crate::prompts::Prompts;
     use crate::providers::{ProviderApi, ProviderError};
-    use crate::server::{AppConfig, chat, Config};
-    use super::*;
+    use crate::server::{chat, AppConfig, Config};
+    use actix_web::{test, web, App};
+    use std::sync::Arc;
 
     const PROMPTS_CONTENT: &str = r#"
         explain: "Explain prompt"
@@ -125,7 +125,8 @@ mod tests {
                 .app_data(web::Data::new(app_config.clone()))
                 .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
                 .route("/", web::post().to(chat)),
-        ).await;
+        )
+        .await;
 
         let req = test::TestRequest::post()
             .uri("/")
@@ -155,7 +156,8 @@ mod tests {
                 .app_data(web::Data::new(app_config.clone()))
                 .app_data(web::Data::new(Arc::new(DEFAULT_API_KEY.to_string())))
                 .route("/", web::post().to(chat)),
-        ).await;
+        )
+        .await;
 
         let question = Question {
             os: "Linux".to_string(),

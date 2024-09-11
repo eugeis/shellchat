@@ -1,11 +1,11 @@
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use futures::future::{ok, Ready};
-use std::task::{Context, Poll};
+use log::debug;
+use reqwest::Client;
 use std::pin::Pin;
 use std::rc::Rc;
 use std::sync::Arc;
-use log::debug;
-use reqwest::Client;
+use std::task::{Context, Poll};
 
 // Define custom middleware with webhook URL
 pub struct RequestNotifier {
@@ -15,7 +15,10 @@ pub struct RequestNotifier {
 
 impl RequestNotifier {
     pub fn new(webhook_url: String, client: Arc<Client>) -> Self {
-        RequestNotifier { webhook_url, client }
+        RequestNotifier {
+            webhook_url,
+            client,
+        }
     }
 }
 
@@ -69,17 +72,14 @@ where
         // Call the notifier asynchronously
         actix_rt::spawn(async move {
             // Send an empty POST request asynchronously to the webhook URL
-            match client.post(&webhook_url)
-                .send()
-                .await
-            {
+            match client.post(&webhook_url).send().await {
                 Ok(response) => {
                     if response.status().is_success() {
                         debug!("Successfully sent log to webhook");
                     } else {
                         debug!("Failed to send log to webhook: {:?}", response.status());
                     }
-                },
+                }
                 Err(e) => {
                     debug!("Error sending log to webhook: {:?}", e);
                 }

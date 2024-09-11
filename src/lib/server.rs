@@ -1,16 +1,16 @@
 use crate::common::{Question, HEADER_API_KEY};
 use crate::defaults::DEFAULT_API_KEY;
+use crate::notifier::RequestNotifier;
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
 use crate::tracing::{setup_tracing_console, setup_tracing_file_console};
-use crate::notifier::{RequestNotifier};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 use fancy_regex::Regex;
+use reqwest::Client;
 use serde::Deserialize;
 use std::fs;
 use std::sync::Arc;
-use reqwest::Client;
 use tracing::{error, info};
 
 lazy_static::lazy_static! {
@@ -167,9 +167,9 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
                     .wrap(RequestNotifier::new(notifier_url.clone(), client.clone()))
                     .route("/", web::post().to(chat))
             })
-                .bind(&cli.url)?
-                .run()
-                .await
+            .bind(&cli.url)?
+            .run()
+            .await
         }
         None => {
             HttpServer::new(move || {
@@ -178,9 +178,9 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
                     .app_data(web::Data::new(key.clone()))
                     .route("/", web::post().to(chat))
             })
-                .bind(&cli.url)?
-                .run()
-                .await
+            .bind(&cli.url)?
+            .run()
+            .await
         }
     }
 }
