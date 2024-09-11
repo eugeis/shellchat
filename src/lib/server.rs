@@ -1,6 +1,6 @@
 use crate::common::{Question, HEADER_API_KEY};
 use crate::defaults::DEFAULT_API_KEY;
-use crate::notifier::RequestNotifier;
+use crate::notifier::{NotifierConfig, RequestNotifier};
 use crate::prompts::Prompts;
 use crate::providers::{new_provider, ProviderApi, ProviderConfig};
 use crate::tracing::{setup_tracing_console, setup_tracing_file_console};
@@ -20,6 +20,7 @@ lazy_static::lazy_static! {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub provider: ProviderConfig,
+    pub notifier: Option<NotifierConfig>,
 }
 
 impl Config {
@@ -120,8 +121,6 @@ pub struct ServerCli {
     pub key: Option<String>,
     #[clap(short = 'd', long, env = "LOGS_DIR")]
     pub logs_dir: Option<String>,
-    #[clap(short = 'n', long, env = "NOTIFIER_URL")]
-    pub notifier_url: Option<String>,
 }
 
 impl ServerCli {
@@ -158,13 +157,16 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
 
     let client = Arc::new(Client::new());
 
-    match cli.notifier_url {
-        Some(notifier_url) => {
+    match config.notifier {
+        Some(notifier_config) => {
             HttpServer::new(move || {
                 App::new()
                     .app_data(web::Data::new(app_config.clone()))
                     .app_data(web::Data::new(key.clone()))
-                    .wrap(RequestNotifier::new(notifier_url.clone(), client.clone()))
+                    .wrap(RequestNotifier::new(
+                        notifier_config.clone(),
+                        client.clone(),
+                    ))
                     .route("/", web::post().to(chat))
             })
             .bind(&cli.url)?
