@@ -1,6 +1,6 @@
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use futures::future::{ok, Ready};
-use log::debug;
+use log::{debug};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
 use serde::Deserialize;
@@ -41,25 +41,9 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        let header_map = match &self.config.headers {
-            Some(headers) => {
-                let mut header_map = HeaderMap::new();
-                for (key, value) in headers {
-                    header_map.insert(
-                        HeaderName::from_bytes(key.as_bytes()).unwrap(),
-                        HeaderValue::from_str(value).unwrap(),
-                    );
-                }
-                Some(header_map)
-            }
-            None => None,
-        };
-
         ok(RequestNotifierMiddleware {
             service: Rc::new(service),
-            url: self.config.url.clone(),
-            header_map,
-            body: self.config.body.clone(),
+            config: self.config.clone(),
             client: self.client.clone(),
         })
     }
@@ -67,9 +51,7 @@ where
 
 pub struct RequestNotifierMiddleware<S> {
     service: Rc<S>,
-    url: String,
-    header_map: Option<HeaderMap>,
-    body: Option<String>,
+    config: NotifierConfig,
     client: Arc<Client>,
 }
 
@@ -89,20 +71,27 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let fut = self.service.call(req);
-        let url = self.url.clone();
-        let headers_map = self.header_map.clone();
-        let body = self.body.clone();
+        let config = self.config.clone();
         let client = self.client.clone();
 
         actix_rt::spawn(async move {
-            let mut request = client.post(url);
-            if let Some(headers_map) = headers_map {
-                request = request.headers(headers_map);
+            let mut request = client.post(&config.url);
+
+            if let Some(headers) = &config.headers {
+                let mut header_map = HeaderMap::new();
+                for (key, value) in headers {
+                    header_map.insert(
+                        HeaderName::from_bytes(key.as_bytes()).unwrap(),
+                        HeaderValue::from_str(value).unwrap(),
+                    );
+                }
+                request = request.headers(header_map);
             }
 
-            if let Some(body) = body {
-                request = request.body(body);
+            if let Some(body) = &config.body {
+                request = request.body(body.clone());
             }
+
             let response = request.send().await;
 
             match response {

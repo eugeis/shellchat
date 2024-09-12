@@ -1,9 +1,11 @@
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
-use tracing_subscriber::fmt::{self, format::FmtSpan};
-use tracing_subscriber::prelude::*;
+use tracing_subscriber::{fmt, prelude::*, EnvFilter, fmt::format::FmtSpan};
+
 
 pub fn setup_tracing_file_console(dir: &str, file: &str) -> WorkerGuard {
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("INFO"));
+
     // File logging layer (without color)
     let file_appender = rolling::hourly(dir, file);
     let (file_non_blocking, guard) = tracing_appender::non_blocking(file_appender);
@@ -23,13 +25,15 @@ pub fn setup_tracing_file_console(dir: &str, file: &str) -> WorkerGuard {
     tracing_subscriber::registry()
         .with(file_layer)
         .with(console_layer)
-        .with(tracing_subscriber::filter::LevelFilter::INFO) // Set max level for both layers
+        .with(env_filter) // Set max level for both layers
         .init();
 
     guard
 }
 
 pub fn setup_tracing_console() {
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("INFO"));
+
     // Console logging layer
     let console_layer = fmt::layer()
         .with_writer(std::io::stdout) // Output to console (stdout)
@@ -39,6 +43,6 @@ pub fn setup_tracing_console() {
     // Initialize the subscriber with the console layer
     tracing_subscriber::registry()
         .with(console_layer)
-        .with(tracing_subscriber::filter::LevelFilter::INFO) // Set log level
+        .with(env_filter) // Set log level
         .init();
 }

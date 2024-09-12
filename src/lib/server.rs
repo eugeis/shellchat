@@ -159,6 +159,7 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
 
     match config.notifier {
         Some(notifier_config) => {
+            info!("activate notifier {}", notifier_config.url);
             HttpServer::new(move || {
                 App::new()
                     .app_data(web::Data::new(app_config.clone()))

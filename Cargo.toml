@@ -28,7 +28,7 @@ async-recursion = "1.1.1"
 tokio = { version = "1.34.0", features = ["rt", "time", "macros", "signal", "rt-multi-thread"] }
 crossterm = "0.28.1"
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 thiserror = "1.0.63"
 futures = "0.3.30"
