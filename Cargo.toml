@@ -1,6 +1,6 @@
 [package]
 name = "shellchat"
-version = "1.0.22"
+version = "1.0.23"
 edition = "2021"
 authors = ["Eugen Eisler <eoeisler@gmail.com>"]
 description = "Transforms natural language into shell commands for execution or explanation."
