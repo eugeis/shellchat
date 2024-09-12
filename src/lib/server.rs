@@ -169,7 +169,10 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
                         client.clone(),
                     ))
                     .route("/", web::post().to(chat))
-                    .route("/health", web::get().to(|| async { HttpResponse::Ok().body("ShellChat is running") }))
+                    .route(
+                        "/health",
+                        web::get().to(|| async { HttpResponse::Ok().body("ShellChat is running") }),
+                    )
             })
             .bind(&cli.url)?
             .run()
@@ -181,7 +184,10 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
                     .app_data(web::Data::new(app_config.clone()))
                     .app_data(web::Data::new(key.clone()))
                     .route("/", web::post().to(chat))
-                    .route("/health", web::get().to(|| async { HttpResponse::Ok().body("ShellChat is running") }))
+                    .route(
+                        "/health",
+                        web::get().to(|| async { HttpResponse::Ok().body("ShellChat is running") }),
+                    )
             })
             .bind(&cli.url)?
             .run()

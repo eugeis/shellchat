@@ -1,7 +1,6 @@
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter, fmt::format::FmtSpan};
-
+use tracing_subscriber::{fmt, fmt::format::FmtSpan, prelude::*, EnvFilter};
 
 pub fn setup_tracing_file_console(dir: &str, file: &str) -> WorkerGuard {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("INFO"));
