@@ -6,11 +6,33 @@ Welcome to ShellChat, your intelligent command-line assistant that transforms na
 
 ### **Environment-Aware Functionality**
 
-ShellChat is designed to be contextually aware of your **operating system** and **shell** environment. It tailors the commands it generates to suit your specific setup, ensuring that every command works seamlessly.
+ShellChat is designed to be contextually aware of your operating system and shell environment, offering both automatic detection and manual configuration options. By default, ShellChat automatically detects your OS and shell, adapting the commands it generates to ensure they run seamlessly within your environment.
+
+Alternatively, you can manually specify the operating system and shell by passing them as command-line parameters (-o, --os for the OS, and -s, --shell for the shell), or through environment variables (OS, SHELL). This dual approach provides maximum flexibility, ensuring that ShellChat is compatible with any setup, whether running locally, in containers, or on remote systems, enhancing the overall efficiency and reducing errors in command execution.
 
 ### **Flexible Language Support**
 
 One of ShellChat's most powerful features is its ability to understand and process commands given in any natural language. Whether you prefer to work in English, German, or any other language, ShellChat can interpret your requests and generate the corresponding shell commands. The examples below demonstrate commands in both English and German, showcasing the tool's versatility.
+
+### **Interactive TUI (Terminal User Interface)**
+
+When you initiate a request via ShellChat's TUI, you will be presented with three options:
+
+1. **Execute** - Run the suggested command immediately.
+2. **Explain** - Get a detailed explanation of what the command does.
+3. **Cancel** - Abort the suggested command if it does not meet your requirements.
+
+![Usage example](execute-explain-cancel.png "Execute, Explain or Cancel")
+
+To navigate through the options, use the arrow keys:
+- **Up Arrow (↑)** - Move to the previous option.
+- **Down Arrow (↓)** - Move to the next option.
+
+Once you've made your selection, press `Enter` to confirm.
+
+> Note:
+In addition to these options, ShellChat offers a reverse mode, where you can provide an existing command to be analyzed and explained. To enable this mode, use the -e or --explain flag.  
+ShellChat will break down the provided command and explain its purpose, syntax, and potential side effects, helping you better understand what the command will do before execution.
 
 ### **Architecture Overview**
 
