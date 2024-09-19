@@ -1,7 +1,8 @@
 use crate::chatter::Chatter;
-use crate::command::IS_STDOUT_TERMINAL;
+use crate::command::{IS_STDOUT_TERMINAL};
 use crate::defaults::DEFAULT_API_KEY;
 use clap::Parser;
+use crate::command;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -15,6 +16,12 @@ pub struct ClientCli {
     pub url: String,
     #[clap(short = 'k', long, env = "API_KEY")]
     pub key: Option<String>,
+    #[clap(short = 'o', long, env = "ОS")]
+    pub os: Option<String>,
+    #[clap(short = 's', long, env = "SHELL")]
+    pub shell: Option<String>,
+    #[clap(short = 'e', long)]
+    pub explain: bool,
     #[clap(trailing_var_arg = true)]
     pub text: Vec<String>,
 }
@@ -36,19 +43,44 @@ pub async fn client(cli: ClientCli) {
         eprintln!("I can't recognize an terminal");
         return;
     }
+
     let text = cli.text();
     if text.is_empty() {
         eprintln!("How can I assist you in your shell?");
         return;
     };
+
     let api_key = cli
         .key
         .clone()
         .unwrap_or_else(|| DEFAULT_API_KEY.to_string());
-    let chatter = Chatter::new(&cli.url, &api_key);
-    match chatter.shell_execute(&text).await {
-        Ok(_) => {}
-        Err(err) => eprintln!("Error: {}", err),
+
+    let os = cli
+        .os
+        .clone()
+        .unwrap_or_else(|| command::OS.clone());
+
+    let shell = cli
+        .shell
+        .clone()
+        .unwrap_or_else(|| command::SHELL.name.clone());
+
+    let chatter = Chatter::new(&cli.url, &api_key, &os, &shell);
+
+    if cli.explain {
+        match chatter.chat(&text, true).await {
+            Ok(response) => {
+                println!("{}", response);
+            }
+            Err(err) => {
+                eprintln!("Error: {}", err);
+            }
+        }
+    } else {
+        match chatter.execute(&text).await {
+            Ok(_) => {}
+            Err(err) => eprintln!("Error: {}", err),
+        }
     }
 }
 

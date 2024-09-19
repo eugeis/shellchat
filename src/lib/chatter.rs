@@ -1,4 +1,3 @@
-use crate::command;
 use crate::command::run_command;
 use crate::command::SHELL;
 use crate::common::Question;
@@ -15,18 +14,18 @@ use std::process;
 #[derive(Debug)]
 pub struct Chatter {
     url: String,
-    shell: String,
     os: String,
+    shell: String,
     client: Client,
     api_key: String,
 }
 
 impl Chatter {
-    pub fn new(url: &str, api_key: &str) -> Self {
+    pub fn new(url: &str, api_key: &str, os: &str, shell: &str) -> Self {
         Chatter {
             url: url.to_string(),
-            shell: SHELL.name.clone(),
-            os: String::from(command::OS.as_str()), // Using OS directly
+            os: os.to_string(),
+            shell: shell.to_string(),
             client: Client::new(),
             api_key: api_key.to_string(),
         }
@@ -68,7 +67,7 @@ impl Chatter {
     }
 
     #[async_recursion]
-    pub async fn shell_execute(&self, text: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn execute(&self, text: &str) -> Result<(), Box<dyn Error>> {
         let spinner = create_spinner("Translating").await;
         let result = self.chat(text, false).await;
         spinner.stop();
@@ -132,7 +131,7 @@ mod tests {
     async fn test_shell_execute_success() {
         let chatter = Chatter::new("http://localhost:8080", "test_key");
 
-        let result = chatter.shell_execute("echo Hello").await;
+        let result = chatter.execute("echo Hello").await;
         assert!(result.is_err()); // Assuming there's no actual server running during tests
     }
 }
