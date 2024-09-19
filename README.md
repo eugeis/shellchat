@@ -8,7 +8,7 @@ Welcome to ShellChat, your intelligent command-line assistant that transforms na
 
 ShellChat is designed to be contextually aware of your operating system and shell environment, offering both automatic detection and manual configuration options. By default, ShellChat automatically detects your OS and shell, adapting the commands it generates to ensure they run seamlessly within your environment.
 
-Alternatively, you can manually specify the operating system and shell by passing them as command-line parameters (-o, --os for the OS, and -s, --shell for the shell), or through environment variables (OS, SHELL). This dual approach provides maximum flexibility, ensuring that ShellChat is compatible with any setup, whether running locally, in containers, or on remote systems, enhancing the overall efficiency and reducing errors in command execution.
+Alternatively, you can manually specify the operating system and shell by passing them as command-line parameters (-o, --os for the OS, and -s, --shell for the shell), or through environment variables (SHC_OS, SHC_SHELL). This dual approach provides maximum flexibility, ensuring that ShellChat is compatible with any setup, whether running locally, in containers, or on remote systems, enhancing the overall efficiency and reducing errors in command execution.
 
 ### **Flexible Language Support**
 
