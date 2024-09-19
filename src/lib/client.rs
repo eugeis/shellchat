@@ -1,8 +1,8 @@
 use crate::chatter::Chatter;
-use crate::command::{IS_STDOUT_TERMINAL};
+use crate::command;
+use crate::command::IS_STDOUT_TERMINAL;
 use crate::defaults::DEFAULT_API_KEY;
 use clap::Parser;
-use crate::command;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -55,10 +55,7 @@ pub async fn client(cli: ClientCli) {
         .clone()
         .unwrap_or_else(|| DEFAULT_API_KEY.to_string());
 
-    let os = cli
-        .os
-        .clone()
-        .unwrap_or_else(|| command::OS.clone());
+    let os = cli.os.clone().unwrap_or_else(|| command::OS.clone());
 
     let shell = cli
         .shell
@@ -107,6 +104,9 @@ mod tests {
         let args = ClientCli {
             url: "http://localhost:8080".to_string(),
             key: None,
+            os: None,
+            shell: None,
+            explain: false,
             text: vec!["Hello, world!".to_string()],
         };
         assert_eq!(args.text(), "Hello, world!");
@@ -117,6 +117,9 @@ mod tests {
         let cli = ClientCli {
             url: "http://localhost:8080".to_string(),
             key: Some("test_key".to_string()),
+            os: None,
+            shell: None,
+            explain: false,
             text: vec!["echo Hello".to_string()],
         };
         client(cli).await;
@@ -127,6 +130,9 @@ mod tests {
         let args = ClientCli {
             url: "http://localhost:8080".to_string(),
             key: None,
+            os: None,
+            shell: None,
+            explain: false,
             text: vec![],
         };
         assert_eq!(args.text(), "");

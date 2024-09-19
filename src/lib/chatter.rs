@@ -14,20 +14,20 @@ use std::process;
 #[derive(Debug)]
 pub struct Chatter {
     url: String,
+    api_key: String,
     os: String,
     shell: String,
     client: Client,
-    api_key: String,
 }
 
 impl Chatter {
     pub fn new(url: &str, api_key: &str, os: &str, shell: &str) -> Self {
         Chatter {
             url: url.to_string(),
+            api_key: api_key.to_string(),
             os: os.to_string(),
             shell: shell.to_string(),
             client: Client::new(),
-            api_key: api_key.to_string(),
         }
     }
 
@@ -121,7 +121,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_chat_success() {
-        let chatter = Chatter::new("http://localhost:8080", "test_key");
+        let chatter = Chatter::new("http://localhost:8080", "test_key", "Linux", "bash");
 
         let result = chatter.chat("Hello", false).await;
         assert!(result.is_err()); // Assuming there's no actual server running during tests
@@ -129,7 +129,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_shell_execute_success() {
-        let chatter = Chatter::new("http://localhost:8080", "test_key");
+        let chatter = Chatter::new("http://localhost:8080", "test_key", "Linux", "bash");
 
         let result = chatter.execute("echo Hello").await;
         assert!(result.is_err()); // Assuming there's no actual server running during tests
