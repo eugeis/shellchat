@@ -1816,7 +1816,7 @@ dependencies = [
 
 [[package]]
 name = "shellchat"
-version = "1.0.23"
+version = "1.0.24"
 dependencies = [
  "actix-rt",
  "actix-web",
