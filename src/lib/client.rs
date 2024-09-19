@@ -10,15 +10,15 @@ pub struct ClientCli {
     #[clap(
         short = 'u',
         long,
-        env = "API_URL",
+        env = "SHC_API_URL",
         default_value = "http://127.0.0.1:8080"
     )]
     pub url: String,
-    #[clap(short = 'k', long, env = "API_KEY")]
+    #[clap(short = 'k', long, env = "SHC_API_KEY")]
     pub key: Option<String>,
-    #[clap(short = 'o', long, env = "ОS")]
+    #[clap(short = 'o', long, env = "SHC_ОS")]
     pub os: Option<String>,
-    #[clap(short = 's', long, env = "SHELL")]
+    #[clap(short = 's', long, env = "SHC_SHELL")]
     pub shell: Option<String>,
     #[clap(short = 'e', long)]
     pub explain: bool,
