@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub const MAX_OS_SHELL_LEN: usize = 20;
+
 pub const HEADER_API_KEY: &str = "api-key";
 
 #[derive(Serialize, Deserialize)]
@@ -13,7 +15,15 @@ pub struct Question {
 #[derive(Serialize, Deserialize)]
 pub struct Error {
     pub message: String,
-    pub code: Option<u16>, // You can include an error code if applicable
+    pub code: Option<u16>,
+}
+
+pub fn check_or_truncate_max_os_shell(value: &str) -> &str {
+    if value.len() > MAX_OS_SHELL_LEN {
+        &value[..MAX_OS_SHELL_LEN]
+    } else {
+        value
+    }
 }
 
 #[cfg(test)]

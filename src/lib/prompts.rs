@@ -1,3 +1,4 @@
+use crate::common::check_or_truncate_max_os_shell;
 use serde::Deserialize;
 use std::fs;
 
@@ -29,7 +30,9 @@ impl Prompts {
         };
         format!(
             "{}\n{}\n{}",
-            self.os_prompt.replace("{os}", os).replace("{shell}", shell),
+            self.os_prompt
+                .replace("{os}", check_or_truncate_max_os_shell(os))
+                .replace("{shell}", check_or_truncate_max_os_shell(shell)),
             combinator,
             self.additional_instructions
         )

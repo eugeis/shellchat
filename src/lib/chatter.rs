@@ -90,7 +90,7 @@ impl Chatter {
                     }
                     "📖 Explain" => {
                         let explain_result = self.chat(&eval_str, true).await?;
-                        println!("{}", explain_result);
+                        termimad::print_text(&explain_result);
                         continue;
                     }
                     "❌ Cancel" => break,

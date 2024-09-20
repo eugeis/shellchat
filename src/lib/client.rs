@@ -55,19 +55,16 @@ pub async fn client(cli: ClientCli) {
         .clone()
         .unwrap_or_else(|| DEFAULT_API_KEY.to_string());
 
-    let os = cli.os.clone().unwrap_or_else(|| command::OS.clone());
+    let os = cli.os.unwrap_or_else(|| command::OS.clone());
 
-    let shell = cli
-        .shell
-        .clone()
-        .unwrap_or_else(|| command::SHELL.name.clone());
+    let shell = cli.shell.unwrap_or_else(|| command::SHELL.name.clone());
 
     let chatter = Chatter::new(&cli.url, &api_key, &os, &shell);
 
     if cli.explain {
         match chatter.chat(&text, true).await {
             Ok(response) => {
-                println!("{}", response);
+                termimad::print_text(&response);
             }
             Err(err) => {
                 eprintln!("Error: {}", err);
