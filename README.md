@@ -20,9 +20,10 @@ When you initiate a request via ShellChat's TUI, you will be presented with thre
 
 1. **Execute** - Run the suggested command immediately.
 2. **Explain** - Get a detailed explanation of what the command does.
-3. **Cancel** - Abort the suggested command if it does not meet your requirements.
+3. **Copy** - Copy the generated command to clipboard.
+4. **Cancel** - Abort the suggested command if it does not meet your requirements.
 
-![Usage example](execute-explain-cancel.png "Execute, Explain or Cancel")
+![Usage example](tui.png "Execute, Explain, Copy or Cancel")
 
 To navigate through the options, use the arrow keys:
 - **Up Arrow (↑)** - Move to the previous option.

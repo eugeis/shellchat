@@ -1,6 +1,6 @@
 [package]
 name = "shellchat"
-version = "1.0.30"
+version = "1.0.31"
 edition = "2021"
 authors = ["Eugen Eisler <eoeisler@gmail.com>"]
 description = "Transforms natural language into shell commands for execution or explanation."
@@ -34,6 +34,7 @@ thiserror = "1.0.63"
 futures = "0.3.30"
 actix-rt = "2"
 termimad = "0.30.0"
+clipboard = "0.5"
 
 [lib]
 name = "shc_lib"

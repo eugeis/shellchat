@@ -10,6 +10,7 @@ use log::debug;
 use reqwest::Client;
 use std::error::Error;
 use std::process;
+use clipboard::ClipboardProvider;
 
 #[derive(Debug)]
 pub struct Chatter {
@@ -76,7 +77,7 @@ impl Chatter {
             Ok(eval_str) => loop {
                 let answer = Select::new(
                     eval_str.trim(),
-                    vec!["✅ Execute", "📖 Explain", "❌ Cancel"],
+                    vec!["✅ Execute", "📖 Explain", "📋 Copy", "❌ Cancel"],
                 )
                 .prompt()?;
 
@@ -92,6 +93,10 @@ impl Chatter {
                         let explain_result = self.chat(&eval_str, true).await?;
                         termimad::print_text(&explain_result);
                         continue;
+                    }
+                    "📋 Copy" => {
+                        let mut clipboard = clipboard::ClipboardContext::new()?;
+                        clipboard.set_contents(eval_str.to_string())?;
                     }
                     "❌ Cancel" => break,
                     _ => {}
