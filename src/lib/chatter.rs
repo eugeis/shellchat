@@ -5,12 +5,12 @@ use crate::common::HEADER_API_KEY;
 use crate::spinner::create_spinner;
 use anyhow::{anyhow, Result};
 use async_recursion::async_recursion;
+use clipboard::ClipboardProvider;
 use inquire::Select;
 use log::debug;
 use reqwest::Client;
 use std::error::Error;
 use std::process;
-use clipboard::ClipboardProvider;
 
 #[derive(Debug)]
 pub struct Chatter {

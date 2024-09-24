@@ -80,6 +80,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev
+          sudo apt-get install -y libxcb-shape0-dev libxcb-xfixes0-dev
 
       - name: Install Rust Toolchain Components
         uses: dtolnay/rust-toolchain@stable

@@ -36,6 +36,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # Conditionally install Linux dependencies
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-shape0-dev libxcb-xfixes0-dev
+
       - name: Test
         run: cargo test --all --all-targets
 
