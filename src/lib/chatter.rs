@@ -1,4 +1,3 @@
-use crate::command::run_command;
 use crate::command::SHELL;
 use crate::common::Question;
 use crate::common::HEADER_API_KEY;
@@ -74,29 +73,29 @@ impl Chatter {
         spinner.stop();
 
         match result {
-            Ok(eval_str) => loop {
+            Ok(command) => loop {
                 let answer = Select::new(
-                    eval_str.trim(),
+                    command.trim(),
                     vec!["✅ Execute", "📖 Explain", "📋 Copy", "❌ Cancel"],
                 )
-                .prompt()?;
+                    .prompt()?;
 
                 match answer {
                     "✅ Execute" => {
-                        debug!("{} {:?}", SHELL.cmd, &[&SHELL.arg, &eval_str]);
-                        let code = run_command(&SHELL.cmd, &[&SHELL.arg, &eval_str], None)?;
+                        debug!("{} {:?}", SHELL.cmd, &[&SHELL.arg, &command]);
+                        let code = SHELL.run_command(&command)?;
                         if code != 0 {
                             process::exit(code);
                         }
                     }
                     "📖 Explain" => {
-                        let explain_result = self.chat(&eval_str, true).await?;
+                        let explain_result = self.chat(&command, true).await?;
                         termimad::print_text(&explain_result);
                         continue;
                     }
                     "📋 Copy" => {
                         let mut clipboard = clipboard::ClipboardContext::new()?;
-                        clipboard.set_contents(eval_str.to_string())?;
+                        clipboard.set_contents(command.to_string())?;
                     }
                     "❌ Cancel" => break,
                     _ => {}

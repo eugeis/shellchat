@@ -1,7 +1,6 @@
 use anyhow::Result;
-use std::collections::HashMap;
 use std::io::IsTerminal;
-use std::{env, ffi::OsStr, process::Command};
+use std::{env, process::Command};
 
 lazy_static::lazy_static! {
     pub static ref OS: String = detect_os();
@@ -27,15 +26,35 @@ pub struct Shell {
     pub name: String,
     pub cmd: String,
     pub arg: String,
+    pub history_cmd: Option<String>,
 }
 
 impl Shell {
-    pub fn new(name: &str, cmd: &str, arg: &str) -> Self {
+    pub fn new(name: &str, cmd: &str, arg: &str, history_cmd: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
             cmd: cmd.to_string(),
             arg: arg.to_string(),
+            history_cmd: history_cmd.map(|cmd| cmd.to_string()),
         }
+    }
+
+    pub fn run_command(&self, eval_str: &str) -> Result<i32> {
+        let status = Command::new(&self.cmd)
+            .arg(&self.arg)
+            .arg(eval_str)
+            .status()?;
+
+        if status.success() {
+            if let Some(history_cmd) = &self.history_cmd {
+                let _ = Command::new(&self.cmd)
+                    .arg(&self.arg)
+                    .arg(format!("{} \"{}\"", history_cmd, eval_str))
+                    .status();
+            }
+        }
+
+        Ok(status.code().unwrap_or_default())
     }
 }
 
@@ -46,9 +65,9 @@ pub fn detect_shell() -> Shell {
             let v = v.to_lowercase();
             if v.split(';').count() >= 3 {
                 if v.contains("powershell\\7\\") {
-                    Some(Shell::new("pwsh", "pwsh.exe", "-c"))
+                    Some(Shell::new("pwsh", "pwsh.exe", "-c", None))
                 } else {
-                    Some(Shell::new("powershell", "powershell.exe", "-Command"))
+                    Some(Shell::new("powershell", "powershell.exe", "-Command", None))
                 }
             } else {
                 None
@@ -56,7 +75,7 @@ pub fn detect_shell() -> Shell {
         }) {
             ret
         } else {
-            Shell::new("cmd", "cmd.exe", "/C")
+            Shell::new("cmd", "cmd.exe", "/C", None)
         }
     } else {
         let shell = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
@@ -65,22 +84,12 @@ pub fn detect_shell() -> Shell {
             None => &shell,
         };
         match shell {
-            "bash" | "zsh" | "fish" | "pwsh" => Shell::new(shell, shell, "-c"),
-            _ => Shell::new("sh", "sh", "-c"),
+            "bash" => Shell::new(shell, shell, "-c", Some("history -s")),
+            "zsh" => Shell::new(shell, shell, "-c", Some("print -s")),
+            "fish" | "pwsh" => Shell::new(shell, shell, "-c", None),
+            _ => Shell::new("sh", "sh", "-c", None),
         }
     }
-}
-
-pub fn run_command<T: AsRef<OsStr>>(
-    cmd: &str,
-    args: &[T],
-    envs: Option<HashMap<String, String>>,
-) -> Result<i32> {
-    let status = Command::new(cmd)
-        .args(args.iter())
-        .envs(envs.unwrap_or_default())
-        .status()?;
-    Ok(status.code().unwrap_or_default())
 }
 
 #[cfg(test)]
@@ -103,7 +112,7 @@ mod tests {
 
     #[test]
     fn test_run_command() {
-        let result = run_command("echo", &["Hello, world!"], None);
+        let result = SHELL.run_command("echo Hello, world!");
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 0);
     }
