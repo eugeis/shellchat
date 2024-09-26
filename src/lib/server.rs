@@ -164,12 +164,14 @@ pub async fn serve(cli: ServerCli) -> std::io::Result<()> {
                 App::new()
                     .app_data(web::Data::new(app_config.clone()))
                     .app_data(web::Data::new(key.clone()))
-                    .wrap(RequestNotifier::new(
-                        notifier_config.clone(),
-                        client.clone(),
-                    ))
-                    .route("/", web::post().to(chat))
-                    .route(
+                    .service(
+                        web::scope("/")
+                            .wrap(RequestNotifier::new(
+                                notifier_config.clone(),
+                                client.clone(),
+                            ))
+                            .route("", web::post().to(chat))
+                    ).route(
                         "/health",
                         web::get().to(|| async { HttpResponse::Ok().body("ShellChat is running") }),
                     )
