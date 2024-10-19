@@ -26,30 +26,32 @@ pub struct Shell {
     pub name: String,
     pub cmd: String,
     pub arg: String,
-    pub history_cmd: Option<String>,
+    pub history_cmd: Option<(String, String)>,
 }
 
 impl Shell {
-    pub fn new(name: &str, cmd: &str, arg: &str, history_cmd: Option<&str>) -> Self {
+    pub fn new(name: &str, cmd: &str, arg: &str, history_cmd: Option<(&str, &str)>) -> Self {
         Self {
             name: name.to_string(),
             cmd: cmd.to_string(),
             arg: arg.to_string(),
-            history_cmd: history_cmd.map(|cmd| cmd.to_string()),
+            history_cmd: history_cmd.map(|cmd| (cmd.0.to_string(), cmd.1.to_string())),
         }
     }
 
-    pub fn run_command(&self, eval_str: &str) -> Result<i32> {
+    pub fn run_command(&self, eval_str: &str, prompt: &str) -> Result<i32> {
         let status = Command::new(&self.cmd)
             .arg(&self.arg)
             .arg(eval_str)
             .status()?;
 
         if status.success() {
+            println!("Success");
             if let Some(history_cmd) = &self.history_cmd {
                 let _ = Command::new(&self.cmd)
                     .arg(&self.arg)
-                    .arg(format!("{} \"{}\"", history_cmd, eval_str))
+                    .arg(&history_cmd.0)
+                    .arg(format!("{} \"{}\" \\#shc: \"{}\"", &history_cmd.1, eval_str, prompt))
                     .status();
             }
         }
@@ -84,8 +86,8 @@ pub fn detect_shell() -> Shell {
             None => &shell,
         };
         match shell {
-            "bash" => Shell::new(shell, shell, "-c", Some("history -s")),
-            "zsh" => Shell::new(shell, shell, "-c", Some("print -s")),
+            "bash" => Shell::new(shell, shell, "-c", Some(("-i", "set -o history; history -s"))),
+            "zsh" => Shell::new(shell, shell, "-c", Some(("-i", "print -s"))),
             "fish" | "pwsh" => Shell::new(shell, shell, "-c", None),
             _ => Shell::new("sh", "sh", "-c", None),
         }
@@ -112,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_run_command() {
-        let result = SHELL.run_command("echo Hello, world!");
+        let result = SHELL.run_command("echo Hello, world!", "User prompt");
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 0);
     }
