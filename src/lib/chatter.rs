@@ -83,7 +83,7 @@ impl Chatter {
                 match answer {
                     "✅ Execute" => {
                         debug!("{} {:?}", SHELL.cmd, &[&SHELL.arg, &command]);
-                        let code = SHELL.run_command(&command)?;
+                        let code = SHELL.run_command(&command, text)?;
                         if code != 0 {
                             process::exit(code);
                         }
